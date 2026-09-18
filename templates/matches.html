@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}What can I make? - Recipe Generator{% endblock %}
+{% block content %}
+<h1>What can I make?</h1>
+
+{% if not has_pantry %}
+<div class="card">
+  <p>Your pantry is empty, so nothing will look like a match yet.
+  <a href="{{ url_for('pantry') }}">Add what you have</a> first.</p>
+</div>
+{% endif %}
+
+{% if not ranked %}
+<div class="card"><p>No confirmed recipes yet. Import or add some first.</p></div>
+{% else %}
+<form method="get" action="{{ url_for('shopping_list') }}">
+<div class="card">
+  {% for r in ranked %}
+  <div class="recipe-row">
+    <div>
+      <label class="checkbox-row" style="margin:0;">
+        <input type="checkbox" name="recipe_id" value="{{ r.recipe['id'] }}">
+        <a href="{{ url_for('view_recipe', recipe_id=r.recipe['id']) }}">{{ r.recipe['title'] }}</a>
+      </label>
+      <div class="hint">
+        {% if r.missing %}
+          <span class="have-list">{{ r.have }}/{{ r.total }} on hand</span> -
+          <span class="missing-list">missing: {{ r.missing|map(attribute='name')|join(', ') }}</span>
+        {% else %}
+          <span class="badge badge-match">you have everything!</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  <button type="submit">Generate shopping list for selected</button>
+</div>
+</form>
+{% endif %}
+{% endblock %}

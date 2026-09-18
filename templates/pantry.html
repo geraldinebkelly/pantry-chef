@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Pantry - Recipe Generator{% endblock %}
+{% block content %}
+<h1>Pantry</h1>
+<div class="card">
+  <p>List what you currently have, one item per line.</p>
+  <form method="post">
+    <textarea name="items" rows="6" placeholder="onion&#10;garlic&#10;chicken breast&#10;rice"></textarea>
+    <button type="submit">Add to pantry</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Current pantry ({{ items|length }})</h2>
+  {% if not items %}
+  <p>Your pantry is empty.</p>
+  {% endif %}
+  <ul class="plain">
+  {% for item in items %}
+    <li class="recipe-row">
+      <span>{{ item['name'] }}</span>
+      <form class="inline" method="post" action="{{ url_for('delete_pantry_item', item_id=item['id']) }}">
+        <button type="submit" class="btn-danger">Remove</button>
+      </form>
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+{% if items %}
+<a class="btn" href="{{ url_for('matches') }}">See what I can make →</a>
+{% endif %}
+{% endblock %}

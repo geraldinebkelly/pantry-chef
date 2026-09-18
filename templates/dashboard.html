@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Recipe Generator{% endblock %}
+{% block content %}
+<h1>Welcome back</h1>
+<div class="grid">
+  <div class="card stat">
+    <div class="num">{{ recipe_count }}</div>
+    <div class="label">Saved recipes</div>
+  </div>
+  <div class="card stat">
+    <div class="num">{{ draft_count }}</div>
+    <div class="label">Drafts awaiting review</div>
+  </div>
+  <div class="card stat">
+    <div class="num">{{ pantry_count }}</div>
+    <div class="label">Pantry items</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Quick start</h2>
+  <ol>
+    <li>Import your saved PDF recipes on the <a href="{{ url_for('import_recipe') }}">Import PDF</a> page (one-time, then review/edit each one).</li>
+    <li>Keep your <a href="{{ url_for('pantry') }}">Pantry</a> list up to date with what you currently have.</li>
+    <li>Go to <a href="{{ url_for('matches') }}">What can I make?</a> to see your recipes ranked by how much you already have.</li>
+    <li>Pick one or more recipes to generate a shopping list of what's missing.</li>
+  </ol>
+  {% if draft_count > 0 %}
+  <p><a class="btn" href="{{ url_for('list_recipes') }}">Review {{ draft_count }} draft recipe(s)</a></p>
+  {% endif %}
+</div>
+{% endblock %}

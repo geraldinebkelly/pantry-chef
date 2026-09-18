@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Shopping List - Recipe Generator{% endblock %}
+{% block content %}
+<h1>Shopping list</h1>
+
+{% if not groups %}
+<div class="card"><p>No recipes selected. Go back to <a href="{{ url_for('matches') }}">What can I make?</a> and pick some.</p></div>
+{% else %}
+
+<div class="card">
+  <h2>Everything to buy ({{ merged|length }})</h2>
+  {% if not merged %}
+  <p>Nothing missing - you already have everything for these recipes!</p>
+  {% endif %}
+  <ul class="plain">
+  {% for name in merged %}
+    <li class="checkbox-row"><input type="checkbox"> {{ name }}</li>
+  {% endfor %}
+  </ul>
+</div>
+
+<div class="card no-print">
+  <h2>By recipe</h2>
+  {% for g in groups %}
+  <h3>{{ g.recipe['title'] }}</h3>
+  {% if g.missing %}
+  <ul class="plain">
+    {% for ing in g.missing %}
+    <li>{{ ing['quantity'] }} {{ ing['unit'] }} {{ ing['name'] }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>Nothing missing for this one.</p>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<button class="no-print" onclick="window.print()">Print list</button>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Import PDF - Recipe Generator{% endblock %}
+{% block content %}
+<h1>Import recipes from PDF</h1>
+<div class="card">
+  <p>Upload one or more recipe PDFs. Each one is parsed automatically, but PDF
+  layouts vary a lot - you'll get a chance to review and fix each recipe
+  before it's saved for good.</p>
+  <form method="post" enctype="multipart/form-data">
+    <label for="pdf_files">Recipe PDF(s)</label>
+    <input type="file" id="pdf_files" name="pdf_files" accept="application/pdf" multiple required>
+    <button type="submit">Upload &amp; parse</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ recipe['title'] }} - Recipe Generator{% endblock %}
+{% block content %}
+<h1>{{ recipe['title'] }}
+  {% if recipe['is_draft'] %}<span class="badge badge-draft">draft</span>{% endif %}
+</h1>
+
+<div class="card">
+  <h2>Ingredients</h2>
+  <ul class="plain">
+  {% for ing in ingredients %}
+    <li>{{ ing['quantity'] }} {{ ing['unit'] }} {{ ing['name'] }}</li>
+  {% else %}
+    <li>No ingredients listed.</li>
+  {% endfor %}
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Instructions</h2>
+  <p style="white-space: pre-wrap;">{{ recipe['instructions'] or 'No instructions saved.' }}</p>
+</div>
+
+<a class="btn btn-secondary" href="{{ url_for('edit_recipe', recipe_id=recipe['id']) }}">Edit</a>
+<a class="btn" href="{{ url_for('shopping_list', recipe_id=[recipe['id']]) }}">Shopping list for this recipe</a>
+<form class="inline" method="post" action="{{ url_for('delete_recipe', recipe_id=recipe['id']) }}"
+      onsubmit="return confirm('Delete this recipe?');">
+  <button type="submit" class="btn-danger">Delete</button>
+</form>
+{% endblock %}

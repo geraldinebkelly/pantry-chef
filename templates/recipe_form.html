@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{% if is_new %}New Recipe{% else %}Edit Recipe{% endif %} - Recipe Generator{% endblock %}
+{% block content %}
+<h1>{% if is_new %}Add a recipe{% else %}{% if recipe['is_draft'] %}Review imported recipe{% else %}Edit recipe{% endif %}{% endif %}</h1>
+
+{% if recipe and recipe['is_draft'] %}
+<div class="card">
+  <p>This was auto-parsed from <strong>{{ recipe['source_pdf'] }}</strong>. Check that the
+  ingredients below look right (one per line, e.g. <code>2 cups flour</code>) and fix
+  anything the parser got wrong. Saving will mark it as a confirmed recipe.</p>
+</div>
+{% endif %}
+
+<div class="card">
+<form method="post">
+  <label for="title">Title</label>
+  <input type="text" id="title" name="title" value="{{ recipe['title'] if recipe else '' }}" required>
+
+  <label for="ingredients">Ingredients (one per line)</label>
+  <textarea id="ingredients" name="ingredients" rows="12">{{ ingredient_text }}</textarea>
+  <div class="hint">Example: <code>1 1/2 cups flour</code>, <code>2 eggs</code>, <code>salt to taste</code></div>
+
+  <label for="instructions">Instructions</label>
+  <textarea id="instructions" name="instructions" rows="10">{{ recipe['instructions'] if recipe else '' }}</textarea>
+
+  <button type="submit">Save recipe</button>
+</form>
+</div>
+{% endblock %}
