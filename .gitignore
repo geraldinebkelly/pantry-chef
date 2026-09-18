@@ -4,3 +4,5 @@ __pycache__/
 data/*.db
 data/pdf_uploads/*
 !data/pdf_uploads/.gitkeep
+data/photos/*
+!data/photos/.gitkeep

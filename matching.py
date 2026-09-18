@@ -15,6 +15,7 @@ def normalize_name(raw_name: str) -> str:
     so pantry items and recipe ingredients line up.
     """
     name = raw_name.lower()
+    name = name.split(",")[0]  # drop trailing prep notes: "bacon, chopped" -> "bacon"
     name = re.sub(r"\([^)]*\)", " ", name)  # drop "(diced)" style notes
     name = re.sub(r"[^a-z\s]", " ", name)
     name = re.sub(r"\s+", " ", name).strip()

@@ -1,3 +1,4 @@
+import os
 import re
 
 import pdfplumber
@@ -37,10 +38,39 @@ _QUANTITY_RE = re.compile(
     r"^\s*(\d+\s+\d+/\d+|\d+/\d+|\d+\.\d+|\d+)\s*(?:-\s*(\d+\s+\d+/\d+|\d+/\d+|\d+\.\d+|\d+))?\s*"
 )
 
+# Blog recipes often give a second unit conversion inline, e.g.
+# "300 g / 10oz bacon" or "1 tbsp / 15 g butter" - strip the "/ 10oz" part
+# once the primary quantity/unit has already been captured.
+_ALT_UNIT_RE = re.compile(r"^/\s*[\d.]+\s*[a-zA-Z]*\.?\s*")
+
 _INGREDIENTS_HEADER_RE = re.compile(r"^\s*ingredients\s*:?\s*$", re.IGNORECASE)
 _INSTRUCTIONS_HEADER_RE = re.compile(
     r"^\s*(instructions|directions|method|steps|preparation)\s*:?\s*$", re.IGNORECASE
 )
+_NOTES_HEADER_RE = re.compile(r"^\s*(recipe notes|notes)\s*:?\s*$", re.IGNORECASE)
+_NUTRITION_HEADER_RE = re.compile(
+    r"^\s*(nutrition facts|nutrition information|nutrition)\s*:?\s*$", re.IGNORECASE
+)
+
+MIN_PHOTO_DIM = 120  # px - filters out any stray icon/button images
+
+# Recipe-plugin PDF exports (WP Recipe Maker and similar) commonly render each
+# ingredient as a standalone checkbox glyph line followed by the text, and
+# separate sub-groups ("Garnish (optional):", "For the sauce:") with a bare
+# label line. Neither is an ingredient on its own.
+_BULLET_CHARS = "-•*▢●✓ \t"
+_SUBHEADING_RE = re.compile(r"^[A-Za-z][A-Za-z0-9 ()/'&-]{0,48}:$")
+_PLUGIN_CHROME_RE = re.compile(r"cook mode|prevent.{0,10}screen", re.IGNORECASE)
+
+
+def _is_ingredient_noise(cleaned_line: str) -> bool:
+    if not cleaned_line:
+        return True
+    if _SUBHEADING_RE.match(cleaned_line):
+        return True
+    if _PLUGIN_CHROME_RE.search(cleaned_line):
+        return True
+    return False
 
 
 def extract_text(pdf_path: str) -> str:
@@ -79,6 +109,9 @@ def parse_ingredient_line(line: str):
             unit = canonical
             remainder = tokens[1].strip() if len(tokens) > 1 else ""
 
+    if remainder.startswith("/"):
+        remainder = _ALT_UNIT_RE.sub("", remainder, count=1)
+
     name = remainder.strip(" -–")
     return quantity, unit, name
 
@@ -93,6 +126,8 @@ def parse_recipe_text(text: str, fallback_title: str) -> dict:
 
     ingredients_start = None
     instructions_start = None
+    notes_start = None
+    nutrition_start = None
     for idx, ln in enumerate(lines):
         if ingredients_start is None and _INGREDIENTS_HEADER_RE.match(ln):
             ingredients_start = idx + 1
@@ -100,15 +135,23 @@ def parse_recipe_text(text: str, fallback_title: str) -> dict:
         if ingredients_start is not None and instructions_start is None \
                 and _INSTRUCTIONS_HEADER_RE.match(ln):
             instructions_start = idx + 1
+            continue
+        if instructions_start is not None and notes_start is None and nutrition_start is None \
+                and _NOTES_HEADER_RE.match(ln):
+            notes_start = idx + 1
+            continue
+        if instructions_start is not None and nutrition_start is None and _NUTRITION_HEADER_RE.match(ln):
+            nutrition_start = idx + 1
             break
 
     ingredients = []
     if ingredients_start is not None:
         end = instructions_start - 1 if instructions_start else len(lines)
         for ln in lines[ingredients_start:end]:
-            if not ln.strip():
+            cleaned = ln.strip(_BULLET_CHARS)
+            if _is_ingredient_noise(cleaned):
                 continue
-            quantity, unit, name = parse_ingredient_line(ln.strip("-•* \t"))
+            quantity, unit, name = parse_ingredient_line(cleaned)
             if not name:
                 continue
             ingredients.append({
@@ -119,17 +162,52 @@ def parse_recipe_text(text: str, fallback_title: str) -> dict:
             })
 
     if instructions_start is not None:
-        instructions = "\n".join(lines[instructions_start:]).strip()
+        instr_end = notes_start - 1 if notes_start else (nutrition_start - 1 if nutrition_start else len(lines))
+        instructions = "\n".join(lines[instructions_start:instr_end]).strip()
     else:
         # No recognizable headers - dump everything into instructions so
         # nothing is lost; the user can re-split ingredients manually.
         instructions = text.strip()
 
+    notes = ""
+    if notes_start is not None:
+        notes_end = nutrition_start - 1 if nutrition_start else len(lines)
+        notes = "\n".join(lines[notes_start:notes_end]).strip()
+
+    nutrition = ""
+    if nutrition_start is not None:
+        nutrition = "\n".join(lines[nutrition_start:]).strip()
+
     return {
         "title": title,
         "ingredients": ingredients,
         "instructions": instructions,
+        "notes": notes,
+        "nutrition": nutrition,
     }
+
+
+def extract_photos(pdf_path: str, output_dir: str, filename_prefix: str) -> list:
+    """Extract embedded images above MIN_PHOTO_DIM (filters out any stray
+    icon/button graphics) and save them as PNGs. Returns the saved
+    filenames (relative to output_dir), in page order."""
+    os.makedirs(output_dir, exist_ok=True)
+    saved = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_num, page in enumerate(pdf.pages):
+            for img_idx, img in enumerate(page.images):
+                src_w, src_h = img.get("srcsize", (0, 0))
+                if src_w < MIN_PHOTO_DIM or src_h < MIN_PHOTO_DIM:
+                    continue
+                try:
+                    bbox = (img["x0"], img["top"], img["x1"], img["bottom"])
+                    pil_image = page.crop(bbox).to_image(resolution=150).original
+                except Exception:
+                    continue
+                file_name = f"{filename_prefix}_p{page_num}_{img_idx}.png"
+                pil_image.save(os.path.join(output_dir, file_name))
+                saved.append(file_name)
+    return saved
 
 
 def import_pdf(pdf_path: str, fallback_title: str) -> dict:

@@ -11,6 +11,23 @@
 </div>
 {% endif %}
 
+{% if photos %}
+<div class="card">
+  <h2>Photos</h2>
+  <div class="photo-grid">
+    {% for photo in photos %}
+    <div class="photo-item">
+      <img src="{{ url_for('serve_photo', file_name=photo['file_name']) }}" alt="Recipe photo">
+      <form method="post" action="{{ url_for('delete_photo', recipe_id=recipe['id'], photo_id=photo['id']) }}"
+            onsubmit="return confirm('Remove this photo?');">
+        <button type="submit" class="btn-danger">Remove</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 <div class="card">
 <form method="post">
   <label for="title">Title</label>
@@ -22,6 +39,12 @@
 
   <label for="instructions">Instructions</label>
   <textarea id="instructions" name="instructions" rows="10">{{ recipe['instructions'] if recipe else '' }}</textarea>
+
+  <label for="notes">Recipe notes</label>
+  <textarea id="notes" name="notes" rows="6" placeholder="Tips, variations, storage notes...">{{ recipe['notes'] if recipe else '' }}</textarea>
+
+  <label for="nutrition">Nutrition information</label>
+  <textarea id="nutrition" name="nutrition" rows="4" placeholder="Calories, fat, protein, etc.">{{ recipe['nutrition'] if recipe else '' }}</textarea>
 
   <button type="submit">Save recipe</button>
 </form>

@@ -5,6 +5,14 @@
   {% if recipe['is_draft'] %}<span class="badge badge-draft">draft</span>{% endif %}
 </h1>
 
+{% if photos %}
+<div class="photo-grid">
+  {% for photo in photos %}
+  <img src="{{ url_for('serve_photo', file_name=photo['file_name']) }}" alt="{{ recipe['title'] }}">
+  {% endfor %}
+</div>
+{% endif %}
+
 <div class="card">
   <h2>Ingredients</h2>
   <ul class="plain">
@@ -20,6 +28,20 @@
   <h2>Instructions</h2>
   <p style="white-space: pre-wrap;">{{ recipe['instructions'] or 'No instructions saved.' }}</p>
 </div>
+
+{% if recipe['notes'] %}
+<div class="card">
+  <h2>Recipe notes</h2>
+  <p style="white-space: pre-wrap;">{{ recipe['notes'] }}</p>
+</div>
+{% endif %}
+
+{% if recipe['nutrition'] %}
+<div class="card">
+  <h2>Nutrition information</h2>
+  <p style="white-space: pre-wrap;">{{ recipe['nutrition'] }}</p>
+</div>
+{% endif %}
 
 <a class="btn btn-secondary" href="{{ url_for('edit_recipe', recipe_id=recipe['id']) }}">Edit</a>
 <a class="btn" href="{{ url_for('shopping_list', recipe_id=[recipe['id']]) }}">Shopping list for this recipe</a>
