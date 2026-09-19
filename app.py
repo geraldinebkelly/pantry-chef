@@ -4,7 +4,7 @@ import uuid
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 
-from categorize import CATEGORY_ORDER, categorize
+from categorize import CATEGORY_ORDER, categorize, is_meat_poultry_or_seafood
 from db import DATA_DIR, PHOTOS_DIR, get_connection, init_db, insert_draft_recipe
 from display_name import display_name
 from matching import normalize_name, rank_recipes, recipe_match
@@ -286,7 +286,7 @@ def shopping_list():
         pantry_set = {r["normalized_name"] for r in pantry_rows}
 
         groups = []
-        seen_names = {}
+        merged_items = {}
         for recipe_id in recipe_ids:
             recipe, ingredients, _photos = fetch_recipe_with_ingredients(conn, recipe_id)
             if recipe is None:
@@ -297,18 +297,32 @@ def shopping_list():
                 # Dedupe on the same singular/order-independent key used for
                 # matching (item["normalized_name"]) so "cube" vs "cubes" or
                 # reworded duplicates across recipes collapse into one line.
-                seen_names.setdefault(item["normalized_name"], display_name(item["name"]))
+                key = item["normalized_name"]
+                entry = merged_items.setdefault(
+                    key, {"name": display_name(item["name"]), "amounts": []}
+                )
+                amount = " ".join(p for p in (item["quantity"], item["unit"]) if p).strip()
+                if amount:
+                    entry["amounts"].append(amount)
     finally:
         conn.close()
 
+    # Meat/poultry/seafood are the ingredients where "how much" actually
+    # matters for shopping - other categories just need the item itself.
     categorized = {cat: [] for cat in CATEGORY_ORDER}
-    for name in seen_names.values():
-        categorized[categorize(name)].append(name)
+    for data in merged_items.values():
+        category = categorize(data["name"])
+        label = data["name"]
+        if category == "Proteins" and data["amounts"] and is_meat_poultry_or_seafood(data["name"]):
+            label = f"{data['name']} ({' + '.join(data['amounts'])})"
+        categorized[category].append(label)
     categorized = {
         cat: sorted(items, key=str.lower) for cat, items in categorized.items() if items
     }
-    merged = sorted(seen_names.values(), key=str.lower)
-    return render_template("shopping_list.html", groups=groups, merged=merged, categorized=categorized)
+    total_count = sum(len(items) for items in categorized.values())
+    return render_template(
+        "shopping_list.html", groups=groups, total_count=total_count, categorized=categorized
+    )
 
 
 if __name__ == "__main__":

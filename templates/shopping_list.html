@@ -8,8 +8,8 @@
 {% else %}
 
 <div class="card">
-  <h2>Everything to buy ({{ merged|length }})</h2>
-  {% if not merged %}
+  <h2>Everything to buy ({{ total_count }})</h2>
+  {% if not total_count %}
   <p>Nothing missing - you already have everything for these recipes!</p>
   {% endif %}
   {% for category, names in categorized.items() %}

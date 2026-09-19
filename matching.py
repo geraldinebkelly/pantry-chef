@@ -7,13 +7,14 @@ _NO_SINGULARIZE = {
     "chives", "greens", "grits", "oats",
 }
 
-# Different words for the same thing that a simple singular/word-order
-# normalization can't unify on its own - e.g. "beef mince" (AU/UK) and
-# "ground beef" (US) are the same ingredient, as are "mince" and "minced".
+# "minced" always means "mince" (garlic, beef, whatever it's attached to).
+# "ground" is ambiguous though - "ground beef" means mince, but "ground
+# cumin"/"ground cardamom" is just a spice's form, not meat - so it's only
+# folded into "mince" when a meat word is also present in the same name.
 _SYNONYMS = {
     "minced": "mince",
-    "ground": "mince",
 }
+_MEAT_NOUNS = {"beef", "pork", "lamb", "chicken", "turkey", "veal", "venison", "goat", "duck"}
 
 
 _OR_SPLIT_RE = re.compile(r"\bor\b")
@@ -34,8 +35,23 @@ def _singularize(word: str) -> str:
 def _normalize_words(text: str) -> str:
     cleaned = re.sub(r"\([^)]*\)", " ", text)  # drop "(diced)" style notes
     cleaned = re.sub(r"[^a-z\s]", " ", cleaned)
-    words = {_SYNONYMS.get(w, w) for w in cleaned.split()}
-    return " ".join(sorted(_singularize(w) for w in words))
+    raw_words = cleaned.split()
+    has_meat_noun = any(w in _MEAT_NOUNS for w in raw_words)
+
+    words = set()
+    for w in raw_words:
+        w = _SYNONYMS.get(w, w)
+        if w == "ground" and has_meat_noun:
+            w = "mince"
+        words.add(_singularize(w))
+
+    if "garlic" in words:
+        # "clove(s)" is a counting unit only in the context of garlic ("2
+        # cloves garlic") - drop it so "garlic" and "garlic cloves" match as
+        # the same ingredient. Elsewhere (e.g. "ground cloves") it's kept,
+        # since that's the spice itself.
+        words.discard("clove")
+    return " ".join(sorted(words))
 
 
 def normalize_name(raw_name: str) -> str:

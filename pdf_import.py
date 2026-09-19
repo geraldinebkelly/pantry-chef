@@ -59,8 +59,22 @@ MIN_PHOTO_DIM = 120  # px - filters out any stray icon/button images
 # separate sub-groups ("Garnish (optional):", "For the sauce:") with a bare
 # label line. Neither is an ingredient on its own.
 _BULLET_CHARS = "-•*▢●✓ \t"
-_SUBHEADING_RE = re.compile(r"^[A-Za-z][A-Za-z0-9 ()/'&-]{0,48}:$")
+# Deliberately not an allow-list of specific punctuation (e.g. "Bulgogi
+# sauce (don't skip the onion & apple!):" has "!" and "&", "Red Curry
+# Paste – choose ONE:" has an en-dash) - any short line ending in a colon
+# within the ingredients section is reliably a group label, never a real
+# ingredient.
+_SUBHEADING_RE = re.compile(r"^.{1,60}:$")
 _PLUGIN_CHROME_RE = re.compile(r"cook mode|prevent.{0,10}screen", re.IGNORECASE)
+
+# Sub-recipe group labels ("Filling", "Bechamel Sauce", "Sauce Option 1")
+# that split a multi-component recipe's ingredients into sections - not
+# ingredients themselves. Unlike _SUBHEADING_RE these never end with a
+# colon, so they're only recognized once quantity/unit parsing has come up
+# empty AND every word is capitalized (a real ingredient without a measured
+# quantity, like "Black pepper" or "Tomato slices", is always sentence-cased
+# - only the first word capitalized - so this doesn't catch those).
+_SECTION_LABEL_RE = re.compile(r"^(?:[A-Z][a-zA-Z'-]*|\d+)(?:\s+(?:[A-Z][a-zA-Z'-]*|\d+)){0,3}$")
 
 
 def _is_ingredient_noise(cleaned_line: str) -> bool:
@@ -71,6 +85,10 @@ def _is_ingredient_noise(cleaned_line: str) -> bool:
     if _PLUGIN_CHROME_RE.search(cleaned_line):
         return True
     return False
+
+
+def _is_section_label(name: str, quantity: str, unit: str) -> bool:
+    return not quantity and not unit and bool(_SECTION_LABEL_RE.match(name.strip()))
 
 
 def extract_text(pdf_path: str) -> str:
@@ -153,6 +171,8 @@ def parse_recipe_text(text: str, fallback_title: str) -> dict:
                 continue
             quantity, unit, name = parse_ingredient_line(cleaned)
             if not name:
+                continue
+            if _is_section_label(name, quantity, unit):
                 continue
             ingredients.append({
                 "quantity": quantity,
