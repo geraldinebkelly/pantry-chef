@@ -110,6 +110,17 @@ ul.plain li { padding: 4px 0; }
 .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 .checkbox-row input { width: auto; }
 
+.category-heading {
+  margin: 18px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--accent-dark);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.category-heading:first-of-type { margin-top: 4px; }
+
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

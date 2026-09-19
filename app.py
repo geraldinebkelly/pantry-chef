@@ -4,13 +4,16 @@ import uuid
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 
+from categorize import CATEGORY_ORDER, categorize
 from db import DATA_DIR, PHOTOS_DIR, get_connection, init_db, insert_draft_recipe
-from matching import normalize_name, rank_recipes
+from display_name import display_name
+from matching import normalize_name, rank_recipes, recipe_match
 from pdf_import import extract_photos, import_pdf, parse_ingredient_line
 
 UPLOAD_DIR = os.path.join(DATA_DIR, "pdf_uploads")
 
 app = Flask(__name__)
+app.jinja_env.filters["display_name"] = display_name
 init_db()
 
 
@@ -265,10 +268,13 @@ def matches():
             ).fetchall()
             recipes_with_ingredients.append((recipe, ingredients))
 
-        ranked = rank_recipes(recipes_with_ingredients, pantry_set)
+        ranked = [r for r in rank_recipes(recipes_with_ingredients, pantry_set) if r["have"] > 0]
+        total_recipes = len(recipes)
     finally:
         conn.close()
-    return render_template("matches.html", ranked=ranked, has_pantry=bool(pantry_set))
+    return render_template(
+        "matches.html", ranked=ranked, has_pantry=bool(pantry_set), total_recipes=total_recipes
+    )
 
 
 @app.route("/shopping-list")
@@ -285,15 +291,24 @@ def shopping_list():
             recipe, ingredients, _photos = fetch_recipe_with_ingredients(conn, recipe_id)
             if recipe is None:
                 continue
-            missing = [i for i in ingredients if i["normalized_name"] not in pantry_set]
+            _have, _total, missing = recipe_match(ingredients, pantry_set)
             groups.append({"recipe": recipe, "missing": missing})
             for item in missing:
-                seen_names.setdefault(item["normalized_name"], item["name"])
+                # Dedupe on the same singular/order-independent key used for
+                # matching (item["normalized_name"]) so "cube" vs "cubes" or
+                # reworded duplicates across recipes collapse into one line.
+                seen_names.setdefault(item["normalized_name"], display_name(item["name"]))
     finally:
         conn.close()
 
+    categorized = {cat: [] for cat in CATEGORY_ORDER}
+    for name in seen_names.values():
+        categorized[categorize(name)].append(name)
+    categorized = {
+        cat: sorted(items, key=str.lower) for cat, items in categorized.items() if items
+    }
     merged = sorted(seen_names.values(), key=str.lower)
-    return render_template("shopping_list.html", groups=groups, merged=merged)
+    return render_template("shopping_list.html", groups=groups, merged=merged, categorized=categorized)
 
 
 if __name__ == "__main__":

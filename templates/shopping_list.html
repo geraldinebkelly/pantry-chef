@@ -12,11 +12,14 @@
   {% if not merged %}
   <p>Nothing missing - you already have everything for these recipes!</p>
   {% endif %}
+  {% for category, names in categorized.items() %}
+  <h3 class="category-heading">{{ category }}</h3>
   <ul class="plain">
-  {% for name in merged %}
+    {% for name in names %}
     <li class="checkbox-row"><input type="checkbox"> {{ name }}</li>
-  {% endfor %}
+    {% endfor %}
   </ul>
+  {% endfor %}
 </div>
 
 <div class="card no-print">
@@ -26,7 +29,7 @@
   {% if g.missing %}
   <ul class="plain">
     {% for ing in g.missing %}
-    <li>{{ ing['quantity'] }} {{ ing['unit'] }} {{ ing['name'] }}</li>
+    <li>{{ ing['quantity'] }} {{ ing['unit'] }} {{ ing['name']|display_name }}</li>
     {% endfor %}
   </ul>
   {% else %}

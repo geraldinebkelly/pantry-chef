@@ -11,7 +11,16 @@
 {% endif %}
 
 {% if not ranked %}
-<div class="card"><p>No confirmed recipes yet. Import or add some first.</p></div>
+<div class="card">
+  {% if total_recipes == 0 %}
+  <p>No confirmed recipes yet. Import or add some first.</p>
+  {% else %}
+  <p>None of your {{ total_recipes }} recipes share an ingredient with what's in your
+  pantry right now. Add more to your <a href="{{ url_for('pantry') }}">pantry</a>, or
+  check that ingredient names in your recipes match how you write them there (see
+  <a href="{{ url_for('list_recipes') }}">Recipes</a> to edit one).</p>
+  {% endif %}
+</div>
 {% else %}
 <form method="get" action="{{ url_for('shopping_list') }}">
 <div class="card">

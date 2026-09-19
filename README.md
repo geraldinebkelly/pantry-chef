@@ -58,10 +58,18 @@ Then open http://127.0.0.1:5000
 ## Notes on ingredient matching
 
 Matching is name-based and approximate: "Tomatoes (diced)" and "tomato"
-both normalize to `tomato`, but it won't know that "scallion" and "green
-onion" are the same thing. If a pantry item and a recipe ingredient don't
-match, it's usually easiest to just edit the recipe's ingredient name (via
-**Edit** on the recipe) to match how you write it in your pantry.
+both normalize to `tomato`, and word order doesn't matter ("beef mince"
+and "mince beef" are the same), but it won't know that "scallion" and
+"green onion" are the same thing, or that "mince" and "minced" are the
+same word. If a pantry item and a recipe ingredient don't match, it's
+usually easiest to just edit the recipe's ingredient name (via **Edit**
+on the recipe) to match how you write it in your pantry.
+
+If you ever change how `matching.normalize_name()` works, run
+`python recompute_normalization.py` afterwards - it recomputes the stored
+normalized form for every existing ingredient and pantry item (merging
+any pantry items that turn out to be duplicates) without touching
+anything else.
 
 ## Project layout
 
