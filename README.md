@@ -1,4 +1,4 @@
-# AI Recipe Generator
+# PantryChef
 
 A local web app for tracking your recipes, seeing which ones you can make
 with what's already in your kitchen, and generating a shopping list for

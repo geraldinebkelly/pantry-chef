@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Recipe Generator{% endblock %}</title>
+<title>{% block title %}PantryChef{% endblock %}</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <header class="topbar">
-  <a class="brand" href="{{ url_for('dashboard') }}">🍲 Recipe Generator</a>
+  <a class="brand" href="{{ url_for('dashboard') }}">🍲 PantryChef</a>
   <nav>
     <a href="{{ url_for('pantry') }}">Pantry</a>
     <a href="{{ url_for('matches') }}">What can I make?</a>

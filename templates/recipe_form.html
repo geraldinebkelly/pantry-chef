@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if is_new %}New Recipe{% else %}Edit Recipe{% endif %} - Recipe Generator{% endblock %}
+{% block title %}{% if is_new %}New Recipe{% else %}Edit Recipe{% endif %} - PantryChef{% endblock %}
 {% block content %}
 <h1>{% if is_new %}Add a recipe{% else %}{% if recipe['is_draft'] %}Review imported recipe{% else %}Edit recipe{% endif %}{% endif %}</h1>
 
