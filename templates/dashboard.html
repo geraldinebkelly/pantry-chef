@@ -33,4 +33,46 @@ pantry tracker, and a shopping list generator, all in one place.</p>
   <p><a class="btn" href="{{ url_for('list_recipes') }}">Review {{ draft_count }} draft recipe(s)</a></p>
   {% endif %}
 </div>
+
+<section class="features">
+  <h2 class="features-heading">Features</h2>
+  <div class="features-grid">
+    <div class="feature">
+      <h3>📄 PDF Recipe Import</h3>
+      <p>Import recipe PDFs you've saved from around the web. PantryChef pulls out the
+      ingredients, instructions, photos, prep/cook time, servings, cuisine and course
+      automatically - review and fix anything before it's saved.</p>
+    </div>
+    <div class="feature">
+      <h3>🛒 Smart Shopping Lists</h3>
+      <p>Select any combination of recipes and get one combined list, grouped by grocery
+      category. Matching ingredients are summed automatically:
+      <span class="inline-tag">1 egg</span> + <span class="inline-tag">2 eggs</span> =
+      <span class="inline-tag">egg (3)</span>.</p>
+      <p>Each item shows which recipe(s) it's for, plus suggested swaps for interchangeable
+      ingredients like sour cream and yogurt.</p>
+    </div>
+    <div class="feature">
+      <h3>🥘 What Can I Make?</h3>
+      <p>Ranks your saved recipes by how much of each you already have in your pantry, so
+      you always know what's closest to ready to cook.</p>
+    </div>
+    <div class="feature">
+      <h3>📅 Plan a Week</h3>
+      <p>Pick a pool of recipes and PantryChef finds the combinations that share the most
+      ingredients, so a bunch of herbs or a tub of yogurt gets used across several meals
+      instead of a little in each.</p>
+    </div>
+    <div class="feature">
+      <h3>🌍 Cuisine &amp; Course Filters</h3>
+      <p>Browse your collection by cuisine (Thai, Chinese, Greek...) or meal type (Mains,
+      Salad, Side Dish...), auto-tagged from your imported recipes.</p>
+    </div>
+    <div class="feature">
+      <h3>📸 Recipe Details &amp; Photos</h3>
+      <p>Every recipe keeps its photos, notes and nutrition info, plus prep/cook/total time
+      and servings, shown right on the page.</p>
+    </div>
+  </div>
+</section>
 {% endblock %}
