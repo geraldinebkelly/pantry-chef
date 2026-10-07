@@ -22,25 +22,15 @@ _PRODUCE_WORDS = {
     "vegetable", "greens", "herb", "bean",
 }
 
-# The subset of Proteins where the amount actually matters for shopping -
-# meat, poultry and seafood specifically (not eggs or plant-based proteins).
-_MEAT_POULTRY_SEAFOOD_WORDS = {
+_PROTEIN_WORDS = {
     "beef", "pork", "lamb", "veal", "venison", "goat", "mutton",
     "chicken", "turkey", "duck",
     "fish", "salmon", "tuna", "cod", "shrimp", "prawn", "crab", "lobster",
     "scallop", "mussel", "oyster", "squid", "calamari", "anchovy", "mackerel",
     "trout", "snapper",
     "bacon", "sausage", "mince", "meatball", "ham", "chorizo", "steak", "meat",
-}
-
-_PROTEIN_WORDS = _MEAT_POULTRY_SEAFOOD_WORDS | {
     "egg", "tofu", "tempeh", "lentil", "chickpea", "seitan",
 }
-
-
-def is_meat_poultry_or_seafood(raw_name: str) -> bool:
-    words = set(normalize_name(raw_name).split())
-    return bool(words & _MEAT_POULTRY_SEAFOOD_WORDS)
 
 _DAIRY_WORDS = {
     "milk", "butter", "cheese", "yogurt", "yoghurt", "cream", "ghee", "buttermilk",

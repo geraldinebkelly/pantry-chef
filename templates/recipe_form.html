@@ -33,6 +33,25 @@
   <label for="title">Title</label>
   <input type="text" id="title" name="title" value="{{ recipe['title'] if recipe else '' }}" required>
 
+  <div class="grid">
+    <div>
+      <label for="prep_time">Prep time</label>
+      <input type="text" id="prep_time" name="prep_time" placeholder="20 minutes" value="{{ recipe['prep_time'] if recipe else '' }}">
+    </div>
+    <div>
+      <label for="cook_time">Cook time</label>
+      <input type="text" id="cook_time" name="cook_time" placeholder="15 minutes" value="{{ recipe['cook_time'] if recipe else '' }}">
+    </div>
+    <div>
+      <label for="total_time">Total time</label>
+      <input type="text" id="total_time" name="total_time" placeholder="35 minutes" value="{{ recipe['total_time'] if recipe else '' }}">
+    </div>
+    <div>
+      <label for="servings">Servings</label>
+      <input type="text" id="servings" name="servings" placeholder="4" value="{{ recipe['servings'] if recipe else '' }}">
+    </div>
+  </div>
+
   <label for="ingredients">Ingredients (one per line)</label>
   <textarea id="ingredients" name="ingredients" rows="12">{{ ingredient_text }}</textarea>
   <div class="hint">Example: <code>1 1/2 cups flour</code>, <code>2 eggs</code>, <code>salt to taste</code></div>

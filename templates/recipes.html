@@ -3,18 +3,26 @@
 {% block content %}
 <h1>Recipes</h1>
 <p><a class="btn" href="{{ url_for('new_recipe') }}">+ Add recipe manually</a></p>
-<div class="card">
-  {% if not recipes %}
-  <p>No recipes yet. <a href="{{ url_for('import_recipe') }}">Import a PDF</a> or add one manually.</p>
-  {% endif %}
+
+{% if not recipes %}
+<div class="card"><p>No recipes yet. <a href="{{ url_for('import_recipe') }}">Import a PDF</a> or add one manually.</p></div>
+{% else %}
+<div class="recipe-tile-grid">
   {% for r in recipes %}
-  <div class="recipe-row">
-    <div>
-      <a href="{{ url_for('view_recipe', recipe_id=r['id']) }}">{{ r['title'] }}</a>
-      {% if r['is_draft'] %}<span class="badge badge-draft">draft - needs review</span>{% endif %}
-    </div>
-    <div>
+  <div class="recipe-tile">
+    <a class="recipe-tile-link" href="{{ url_for('view_recipe', recipe_id=r['id']) }}">
+      <div class="recipe-tile-photo">
+        {% if cover_photos.get(r['id']) %}
+        <img src="{{ url_for('serve_photo', file_name=cover_photos[r['id']]) }}" alt="">
+        {% else %}
+        <div class="recipe-tile-placeholder">No photo</div>
+        {% endif %}
+      </div>
+      <div class="recipe-tile-title">{{ r['title'] }}</div>
+    </a>
+    <div class="recipe-tile-actions">
       {% if r['is_draft'] %}
+      <span class="badge badge-draft">draft</span>
       <a class="btn" href="{{ url_for('edit_recipe', recipe_id=r['id']) }}">Review</a>
       {% else %}
       <a class="btn btn-secondary" href="{{ url_for('edit_recipe', recipe_id=r['id']) }}">Edit</a>
@@ -23,4 +31,5 @@
   </div>
   {% endfor %}
 </div>
+{% endif %}
 {% endblock %}

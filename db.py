@@ -11,6 +11,10 @@ PHOTOS_DIR = os.path.join(DATA_DIR, "photos")
 _RECIPE_COLUMN_ADDITIONS = {
     "notes": "TEXT DEFAULT ''",
     "nutrition": "TEXT DEFAULT ''",
+    "prep_time": "TEXT DEFAULT ''",
+    "cook_time": "TEXT DEFAULT ''",
+    "total_time": "TEXT DEFAULT ''",
+    "servings": "TEXT DEFAULT ''",
 }
 
 SCHEMA = """
@@ -21,6 +25,10 @@ CREATE TABLE IF NOT EXISTS recipes (
     instructions TEXT,
     notes TEXT DEFAULT '',
     nutrition TEXT DEFAULT '',
+    prep_time TEXT DEFAULT '',
+    cook_time TEXT DEFAULT '',
+    total_time TEXT DEFAULT '',
+    servings TEXT DEFAULT '',
     is_draft INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -75,9 +83,20 @@ def insert_draft_recipe(conn, parsed: dict, source_pdf: str) -> int:
     """Insert a freshly-parsed PDF recipe as a draft, including any photos
     found in the PDF. Returns the new recipe id."""
     cur = conn.execute(
-        "INSERT INTO recipes (title, source_pdf, instructions, notes, nutrition, is_draft) "
-        "VALUES (?, ?, ?, ?, ?, 1)",
-        (parsed["title"], source_pdf, parsed["instructions"], parsed.get("notes", ""), parsed.get("nutrition", "")),
+        "INSERT INTO recipes (title, source_pdf, instructions, notes, nutrition, "
+        "prep_time, cook_time, total_time, servings, is_draft) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+        (
+            parsed["title"],
+            source_pdf,
+            parsed["instructions"],
+            parsed.get("notes", ""),
+            parsed.get("nutrition", ""),
+            parsed.get("prep_time", ""),
+            parsed.get("cook_time", ""),
+            parsed.get("total_time", ""),
+            parsed.get("servings", ""),
+        ),
     )
     recipe_id = cur.lastrowid
     for pos, ing in enumerate(parsed["ingredients"]):

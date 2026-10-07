@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Plan a week - PantryChef{% endblock %}
+{% block content %}
+<h1>Plan a week</h1>
+<p class="tagline">Pick a pool of recipes and PantryChef will find which combinations of
+  {{ combo_size }} share the most ingredients you'd still need to buy - so one bunch of
+  something gets used across several meals instead of a little in each.</p>
+
+{% if recipes|length == 0 %}
+<div class="card"><p>No confirmed recipes yet. Import or add some first.</p></div>
+{% else %}
+
+{% if searched %}
+<div class="card">
+  {% if too_many_combos %}
+  <p>That's too many recipes to compare every combination of {{ combo_size }} at once.
+  Open "Recipe pool" below, uncheck some, then try again.</p>
+  {% elif not suggestions %}
+  <p>No combination of {{ combo_size }} recipes in your selected pool shares an
+  ingredient you'd still need to buy. Try a different group of recipes, a smaller
+  "recipes per plan", or add more to your <a href="{{ url_for('pantry') }}">pantry</a>.</p>
+  {% else %}
+  <h2>Suggested plans</h2>
+  {% for combo in suggestions %}
+  <div class="recipe-row" style="display:block;">
+    <div>
+      {% for r in combo.recipes %}
+      <a href="{{ url_for('view_recipe', recipe_id=r['id']) }}">{{ r['title'] }}</a>{% if not loop.last %} + {% endif %}
+      {% endfor %}
+    </div>
+    <div class="hint">
+      shared:
+      {% for cat, names in combo.shared_by_category.items() %}
+      <span class="have-list">{{ cat }}: {{ names|join(', ') }}</span>{% if not loop.last %} &middot; {% endif %}
+      {% endfor %}
+      - {{ combo.distinct_count }} item{{ 's' if combo.distinct_count != 1 else '' }} to buy total
+    </div>
+    {% if combo.swaps %}
+    <div class="hint">
+      possible swaps:
+      {% for swap in combo.swaps %}
+      <span class="have-list">{{ swap['items']|join(' / ') }}</span> ({{ swap.label }}){% if not loop.last %}, {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+    <form method="get" action="{{ url_for('shopping_list') }}" style="margin-top:6px;">
+      {% for r in combo.recipes %}
+      <input type="hidden" name="recipe_id" value="{{ r['id'] }}">
+      {% endfor %}
+      <button type="submit">Generate shopping list for these</button>
+    </form>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endif %}
+
+<form method="get" action="{{ url_for('plan_week') }}">
+  <details class="card" {% if not searched %}open{% endif %}>
+    <summary><h2 style="display:inline;">Recipe pool</h2></summary>
+    {% for r in recipes %}
+    <label class="checkbox-row" style="margin:0;">
+      <input type="checkbox" name="recipe_id" value="{{ r['id'] }}" {% if r['id'] in pool_ids %}checked{% endif %}>
+      {{ r['title'] }}
+    </label>
+    {% endfor %}
+
+    <label for="combo_size">Recipes per plan</label>
+    <select id="combo_size" name="combo_size">
+      {% for n in [2, 3, 4, 5] %}
+      <option value="{{ n }}" {% if n == combo_size %}selected{% endif %}>{{ n }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit" name="find" value="1">Find overlap suggestions</button>
+  </details>
+</form>
+
+{% endif %}
+{% endblock %}

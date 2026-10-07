@@ -12,15 +12,34 @@
   {% if not total_count %}
   <p>Nothing missing - you already have everything for these recipes!</p>
   {% endif %}
-  {% for category, names in categorized.items() %}
+  {% for category, items in categorized.items() %}
   <h3 class="category-heading">{{ category }}</h3>
   <ul class="plain">
-    {% for name in names %}
-    <li class="checkbox-row"><input type="checkbox"> {{ name }}</li>
+    {% for item in items %}
+    <li class="checkbox-row">
+      <input type="checkbox">
+      <div>
+        <div>{{ item.name }}{% if item.amount %} <span class="item-amount">({{ item.amount }})</span>{% endif %}</div>
+        {% if item.recipes %}<div class="item-recipes">{{ item.recipes }}</div>{% endif %}
+      </div>
+    </li>
     {% endfor %}
   </ul>
   {% endfor %}
 </div>
+
+{% if swaps %}
+<div class="card no-print">
+  <h2>Possible swaps</h2>
+  <p class="hint">These are often used interchangeably - buying just one and using it
+  for everything below could save you a trip or a half-used container.</p>
+  <ul class="plain">
+    {% for swap in swaps %}
+    <li><span class="have-list">{{ swap['items']|join(' / ') }}</span> <span class="hint">({{ swap.label }})</span></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
 
 <div class="card no-print">
   <h2>By recipe</h2>
@@ -36,6 +55,22 @@
   <p>Nothing missing for this one.</p>
   {% endif %}
   {% endfor %}
+</div>
+
+<div class="card no-print">
+  <h2>Email this list</h2>
+  {% if email_status %}
+  <p class="{{ 'email-success' if email_status.ok else 'email-error' }}">{{ email_status.message }}</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('send_shopping_list') }}">
+    {% for rid in recipe_ids %}
+    <input type="hidden" name="recipe_id" value="{{ rid }}">
+    {% endfor %}
+    <label for="email">Send to</label>
+    <input type="email" id="email" name="email" placeholder="you@example.com" value="{{ email_value or '' }}" required>
+    <button type="submit">Send email</button>
+  </form>
+  <div class="hint">Or use your own mail app instead: <a href="{{ mailto_href }}">open in email client</a>.</div>
 </div>
 
 <button class="no-print" onclick="window.print()">Print list</button>

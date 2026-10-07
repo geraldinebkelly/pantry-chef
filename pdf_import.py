@@ -134,6 +134,56 @@ def parse_ingredient_line(line: str):
     return quantity, unit, name
 
 
+# Recipe-plugin exports (WP Recipe Maker, used by RecipeTin Eats and many
+# other recipe blogs) render the Prep/Cook/Total time and servings as
+# separate on-page elements (a number, the unit word, and an abbreviated
+# unit tooltip) that pdfplumber flattens into a run like
+# "Prep: 20\nminutes\nmins Cook: 55\nminutes\nmins ... Total: 1\nday\nd 1\n
+# hour\nhr 15\nminutes\nmins" - this reassembles that into "20 minutes",
+# "1 day 1 hour 15 minutes", etc.
+_DURATION_TOKEN_RE = re.compile(r"(\d+)\s*(day|hour|minute)s?\s*(?:d|hr|hrs|mins)?\s*")
+
+# Servings is similarly scrambled - a number lands before the word
+# "Servings", and an optional range ("– 5") or qualifier ("people", "as a
+# side") lands after it, right before the "Tap or hover to scale" control.
+_SERVINGS_RE = re.compile(
+    r"(\d+)\s*Servings\s*(?:[-–]\s*(\d+))?\s*([a-zA-Z](?:[a-zA-Z ]*[a-zA-Z])?)?\s*Tap or hover to scale"
+)
+
+
+def _extract_duration(text: str, start: int) -> str:
+    parts = []
+    pos = start
+    while True:
+        match = _DURATION_TOKEN_RE.match(text, pos)
+        if not match:
+            break
+        num, unit = match.group(1), match.group(2)
+        parts.append(f"{num} {unit}{'s' if num != '1' else ''}")
+        pos = match.end()
+    return " ".join(parts)
+
+
+def extract_recipe_meta(text: str) -> dict:
+    """Best-effort extraction of prep/cook/total time and servings from a
+    WP Recipe Maker-style export. Any field not found is left as ""."""
+    meta = {"prep_time": "", "cook_time": "", "total_time": "", "servings": ""}
+    for label, key in (("Prep:", "prep_time"), ("Cook:", "cook_time"), ("Total:", "total_time")):
+        match = re.search(re.escape(label) + r"\s*", text)
+        if match:
+            meta[key] = _extract_duration(text, match.end())
+
+    match = _SERVINGS_RE.search(text)
+    if match:
+        low, high, suffix = match.groups()
+        servings = f"{low}-{high}" if high else low
+        if suffix and suffix.strip():
+            servings += f" {suffix.strip()}"
+        meta["servings"] = servings
+
+    return meta
+
+
 def parse_recipe_text(text: str, fallback_title: str) -> dict:
     lines = [ln.rstrip() for ln in text.splitlines()]
     non_empty = [ln for ln in lines if ln.strip()]
@@ -198,12 +248,18 @@ def parse_recipe_text(text: str, fallback_title: str) -> dict:
     if nutrition_start is not None:
         nutrition = "\n".join(lines[nutrition_start:]).strip()
 
+    meta = extract_recipe_meta(text)
+
     return {
         "title": title,
         "ingredients": ingredients,
         "instructions": instructions,
         "notes": notes,
         "nutrition": nutrition,
+        "prep_time": meta["prep_time"],
+        "cook_time": meta["cook_time"],
+        "total_time": meta["total_time"],
+        "servings": meta["servings"],
     }
 
 

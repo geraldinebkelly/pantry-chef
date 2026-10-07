@@ -5,6 +5,20 @@
   {% if recipe['is_draft'] %}<span class="badge badge-draft">draft</span>{% endif %}
 </h1>
 
+{% set meta_fields = [
+  ('Prep Time', recipe['prep_time']),
+  ('Cook Time', recipe['cook_time']),
+  ('Total Time', recipe['total_time']),
+  ('Servings', recipe['servings']),
+] %}
+{% if meta_fields|selectattr('1')|list %}
+<p class="recipe-meta">
+  {%- for label, value in meta_fields if value -%}
+  {{ '  •  ' if not loop.first }}<strong>{{ label }}</strong> {{ value }}
+  {%- endfor -%}
+</p>
+{% endif %}
+
 {% if photos %}
 <div class="photo-grid">
   {% for photo in photos %}

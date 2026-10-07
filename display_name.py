@@ -24,8 +24,11 @@ _UNIT_LIKE_WORDS = {"clove", "cloves"}
 
 
 def display_name(raw_name: str) -> str:
-    text = raw_name.split(",")[0]  # drop trailing prep clause: "bacon, chopped" -> "bacon"
-    text = re.sub(r"\([^)]*\)", " ", text)  # drop "(diced)" style notes
+    # Strip "(...)" notes before splitting on comma, since a note can itself
+    # contain a comma ("onion (brown, yellow, or white), cut into wedges") -
+    # splitting first would cut the name off mid-parenthesis.
+    text = re.sub(r"\([^)]*\)", " ", raw_name)  # drop "(diced)" style notes
+    text = text.split(",")[0]  # drop trailing prep clause: "bacon, chopped" -> "bacon"
 
     tokens = [t for t in text.split() if t.lower().strip(".") not in _PREP_WORDS]
 

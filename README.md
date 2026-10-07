@@ -13,7 +13,18 @@ what's missing.
 - **"What can I make?"** Ranks your saved recipes by how many ingredients
   you already have, and shows what's missing for each.
 - **Shopping lists.** Select one or more recipes and get a combined,
-  deduplicated list of everything you need to buy.
+  deduplicated list of everything you need to buy, grouped by category
+  (Produce, Proteins, Dairy & Alternatives, Grains & Pantry), plus a
+  "Possible swaps" section for ingredients you're buying that are commonly
+  interchangeable (e.g. sour cream / yogurt).
+- **Plan a week.** Pick a pool of recipes and PantryChef finds which
+  combinations share the most ingredients you'd still need to buy, so one
+  bunch of something gets used across several meals instead of a little in
+  each. Only considers Produce, Proteins and Dairy & Alternatives - pantry
+  staples and condiments (oil, salt, soy sauce, cornstarch, etc., anything
+  categorized as Grains & Pantry) don't count toward overlap.
+- **Email the list.** Send the shopping list to any email address, or open
+  it in your own mail app.
 
 No AI/LLM calls are used — matching is done with local text normalization
 (lowercasing, singularizing, stripping notes like "(diced)"). PDF parsing
@@ -32,6 +43,24 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+
+## Email setup (optional)
+
+Emailing a shopping list requires an SMTP account to send *from* - PantryChef
+doesn't use any third-party email service or API key, just plain SMTP with
+your own email account's credentials.
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` and fill in your SMTP details (see the comments in
+`.env.example` for how to generate a Gmail "App Password" - your regular
+account password won't work for SMTP). `.env` is gitignored and never
+committed. Restart the app after editing it. If `.env` isn't set up, the
+"Email this list" form shows a clear message telling you what's missing
+instead of failing silently - the "open in email client" link (uses your
+system's default mail app) always works regardless.
 
 ## Running
 
@@ -76,9 +105,15 @@ anything else.
 ```
 app.py            Flask routes
 db.py             SQLite schema + connection helper
-matching.py       Ingredient name normalization + recipe ranking
+matching.py       Ingredient name normalization + recipe ranking + overlap suggestions
+categorize.py     Shopping list categorization (Produce/Proteins/etc.)
+substitutions.py  Curated interchangeable-ingredient groups (dairy, herbs, oils, etc.)
+display_name.py   Strips prep words for display ("crushed garlic" -> "garlic")
 pdf_import.py     PDF text extraction + heuristic recipe parsing
+emailer.py        Sends the shopping list over SMTP
+env_config.py     Minimal .env loader for SMTP credentials
 templates/        Jinja2 templates
 static/style.css  Styling
 data/             SQLite DB + uploaded PDFs (gitignored)
+.env              Your SMTP credentials (gitignored, copy from .env.example)
 ```

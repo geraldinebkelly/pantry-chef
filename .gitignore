@@ -1,6 +1,7 @@
 venv/
 __pycache__/
 *.pyc
+.env
 data/*.db
 data/pdf_uploads/*
 !data/pdf_uploads/.gitkeep
