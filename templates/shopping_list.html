@@ -62,7 +62,7 @@
     <input type="email" id="email" name="email" placeholder="you@example.com" value="{{ email_value or '' }}" required>
     <button type="submit">Send email</button>
   </form>
-  <div class="hint">Or use your own mail app instead: <a href="{{ mailto_href }}">open in email client</a>.</div>
+  <div class="hint">Or use your own mail app instead: <a href="{{ mailto_href }}" target="_blank" rel="noopener">open in email client</a>.</div>
 </div>
 
 <button class="no-print" onclick="window.print()">Print list</button>
