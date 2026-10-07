@@ -1,12 +1,16 @@
 """Combines ingredient amounts across recipes so the shopping list can show
-one summed quantity ("3 eggs") instead of a separate line per recipe.
+one summed quantity ("3 eggs") instead of a separate line per recipe, and
+scales a single recipe's ingredients to a different serving count.
 
 Parsing is best-effort and conservative: anything this can't confidently
-sum (a range like "1-2", a vague amount like "a pinch", mismatched units)
-falls back to listing the amounts side by side rather than guessing.
+sum or scale (a range like "1-2", a vague amount like "a pinch", mismatched
+units) falls back to listing/showing the amount as-is rather than guessing.
 """
+import re
 from collections import Counter
 from fractions import Fraction
+
+_LEADING_INT_RE = re.compile(r"\d+")
 
 # Units that pluralize normally in English. Abbreviations (tbsp, tsp, oz,
 # lb, g, kg, ml, l) are the same whether the amount is 1 or 10, so they're
@@ -38,18 +42,33 @@ def parse_quantity(text: str):
         return None
 
 
+_COOKING_DENOMINATORS = (2, 3, 4, 8)
+
+
 def format_quantity(value: float) -> str:
-    """Render a summed quantity back in recipe style: whole numbers as-is,
-    otherwise as a simple fraction ("1 1/2") instead of a decimal."""
-    if value == int(value):
-        return str(int(value))
-    frac = Fraction(value).limit_denominator(8)
-    whole, remainder = divmod(frac, 1)
-    if remainder == 0:
+    """Render a quantity back in recipe style: whole numbers as-is, common
+    cooking fractions ("1 1/2") when the value is actually close to one,
+    otherwise a plain decimal. Summing/scaling rarely lands exactly on an
+    eighth - forcing everything into one (e.g. 0.3 as "2/7") would be more
+    misleading than just showing "0.3"."""
+    value = round(value, 6)
+    whole = int(value)
+    remainder = value - whole
+    if remainder < 1e-9:
         return str(whole)
-    if whole == 0:
-        return f"{remainder.numerator}/{remainder.denominator}"
-    return f"{int(whole)} {remainder.numerator}/{remainder.denominator}"
+    for denom in _COOKING_DENOMINATORS:
+        numerator = round(remainder * denom)
+        if numerator == 0:
+            continue
+        if abs(remainder - numerator / denom) < 0.01:
+            frac = Fraction(numerator, denom)
+            extra_whole, frac = divmod(frac, 1)
+            parts = [str(whole + extra_whole)] if (whole + extra_whole) else []
+            if frac:
+                parts.append(f"{frac.numerator}/{frac.denominator}")
+            return " ".join(parts)
+    text = f"{value:.2f}".rstrip("0").rstrip(".")
+    return text
 
 
 def _pluralize(unit: str, value: float) -> str:
@@ -87,3 +106,25 @@ def combine_amounts(amounts) -> str:
                     parts.append(text if n == 1 else f"{text} x{n}")
 
     return " + ".join(parts)
+
+
+def parse_base_servings(text: str):
+    """Pull the base serving count out of a recipe's servings text ("4",
+    "4-5 people", "6 people") for scaling math. Returns None if there's no
+    number to anchor on."""
+    match = _LEADING_INT_RE.search(text or "")
+    return int(match.group(0)) if match else None
+
+
+def scale_ingredients(ingredients, ratio: float):
+    """Return ingredient rows with quantity scaled by `ratio`. Rows with no
+    quantity, or one this can't parse (a range, "to taste"), pass through
+    unchanged rather than being guessed at."""
+    scaled = []
+    for ing in ingredients:
+        ing = dict(ing)
+        parsed = parse_quantity(ing.get("quantity", ""))
+        if parsed is not None:
+            ing["quantity"] = format_quantity(parsed * ratio)
+        scaled.append(ing)
+    return scaled

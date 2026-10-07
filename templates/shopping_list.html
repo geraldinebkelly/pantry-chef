@@ -4,28 +4,36 @@
 <h1>Shopping list</h1>
 
 {% if not groups %}
-<div class="card"><p>No recipes selected. Go back to <a href="{{ url_for('matches') }}">What can I make?</a> and pick some.</p></div>
+<div class="card"><p>No recipes selected. Go to <a href="{{ url_for('list_recipes') }}">Recipes</a> or
+<a href="{{ url_for('matches') }}">What can I make?</a> and tick what you're planning to cook.</p></div>
 {% else %}
 
 <div class="card">
-  <h2>Everything to buy ({{ total_count }})</h2>
+  <div class="ingredients-header">
+    <h2>Everything to buy ({{ total_count }})</h2>
+    {% if total_count %}
+    <button type="button" id="clear-checked" class="btn-secondary no-print">Clear checked</button>
+    {% endif %}
+  </div>
   {% if not total_count %}
   <p>Nothing missing - you already have everything for these recipes!</p>
   {% endif %}
-  {% for category, items in categorized.items() %}
-  <h3 class="category-heading">{{ category }}</h3>
-  <ul class="plain">
-    {% for item in items %}
-    <li class="checkbox-row">
-      <input type="checkbox">
-      <div>
-        <div>{{ item.name }}{% if item.amount %} <span class="item-amount">({{ item.amount }})</span>{% endif %}</div>
-        {% if item.recipes %}<div class="item-recipes">{{ item.recipes }}</div>{% endif %}
-      </div>
-    </li>
+  <div id="shopping-list-items">
+    {% for category, items in categorized.items() %}
+    <h3 class="category-heading">{{ category }}</h3>
+    <ul class="plain">
+      {% for item in items %}
+      <li class="checkbox-row">
+        <input type="checkbox" data-key="{{ category }}|{{ item.name }}">
+        <div>
+          <div>{{ item.name }}{% if item.amount %} <span class="item-amount">({{ item.amount }})</span>{% endif %}</div>
+          {% if item.recipes %}<div class="item-recipes">{{ item.recipes }}</div>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
     {% endfor %}
-  </ul>
-  {% endfor %}
+  </div>
 </div>
 
 {% if swaps %}
@@ -40,22 +48,6 @@
   </ul>
 </div>
 {% endif %}
-
-<div class="card no-print">
-  <h2>By recipe</h2>
-  {% for g in groups %}
-  <h3>{{ g.recipe['title'] }}</h3>
-  {% if g.missing %}
-  <ul class="plain">
-    {% for ing in g.missing %}
-    <li>{{ ing['quantity'] }} {{ ing['unit'] }} {{ ing['name']|display_name }}</li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p>Nothing missing for this one.</p>
-  {% endif %}
-  {% endfor %}
-</div>
 
 <div class="card no-print">
   <h2>Email this list</h2>
@@ -75,4 +67,8 @@
 
 <button class="no-print" onclick="window.print()">Print list</button>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='shopping-list.js') }}" defer></script>
 {% endblock %}

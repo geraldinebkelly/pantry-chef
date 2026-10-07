@@ -11,7 +11,7 @@ from display_name import display_name
 from emailer import send_shopping_list_email
 from env_config import load_dotenv
 from matching import normalize_name, rank_recipes, recipe_match, suggest_overlapping_plans
-from quantities import combine_amounts
+from quantities import combine_amounts, parse_base_servings, scale_ingredients
 from substitutions import find_swaps
 from pdf_import import extract_photos, import_pdf, parse_ingredient_line
 
@@ -195,7 +195,24 @@ def view_recipe(recipe_id):
         conn.close()
     if recipe is None:
         return redirect(url_for("list_recipes"))
-    return render_template("recipe_detail.html", recipe=recipe, ingredients=ingredients, photos=photos)
+
+    base_servings = parse_base_servings(recipe["servings"])
+    multiplier = request.args.get("multiplier", type=float)
+    scale_ratio = multiplier if multiplier and multiplier > 0 else 1.0
+
+    if scale_ratio != 1.0:
+        ingredients = scale_ingredients(ingredients, scale_ratio)
+    target_servings = round(base_servings * scale_ratio) if base_servings else None
+
+    return render_template(
+        "recipe_detail.html",
+        recipe=recipe,
+        ingredients=ingredients,
+        photos=photos,
+        base_servings=base_servings,
+        target_servings=target_servings,
+        scale_ratio=scale_ratio,
+    )
 
 
 @app.route("/photos/<path:file_name>")

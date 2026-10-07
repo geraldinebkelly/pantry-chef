@@ -5,6 +5,11 @@
   {% if recipe['is_draft'] %}<span class="badge badge-draft">draft</span>{% endif %}
 </h1>
 
+<button type="button" id="cook-mode-toggle" class="btn btn-secondary no-print" aria-pressed="false"
+        title="Keep the screen on while you're cooking, so it doesn't lock mid-recipe">
+  🔆 Cook Mode: Off
+</button>
+
 {% if recipe['course'] or recipe['cuisine'] %}
 <p class="cuisine-tags">
   {% for tag in recipe['course'].split(',') if tag.strip() %}
@@ -39,7 +44,28 @@
 {% endif %}
 
 <div class="card">
-  <h2>Ingredients</h2>
+  <div class="ingredients-header">
+    <h2>Ingredients</h2>
+    {% if ingredients %}
+    <div class="scale-controls no-print">
+      <div class="quick-scale">
+        <span class="quick-scale-label">Scale:</span>
+        {% for label, m, title in [
+          ('½×', 0.5, 'Halve the recipe - shows ingredient amounts for half the usual batch'),
+          ('1×', 1, 'Original recipe amounts, as written'),
+          ('2×', 2, 'Double the recipe - shows ingredient amounts for twice the usual batch'),
+          ('3×', 3, 'Triple the recipe - shows ingredient amounts for three times the usual batch'),
+        ] %}
+        <a class="filter-chip {{ 'active' if scale_ratio == m }}" title="{{ title }}"
+           href="{{ url_for('view_recipe', recipe_id=recipe['id'], multiplier=(m if m != 1 else None)) }}">{{ label }}</a>
+        {% endfor %}
+      </div>
+      {% if scale_ratio != 1 %}
+      <span class="hint">{% if base_servings %}~{{ target_servings }} servings{% endif %}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
   <ul class="plain">
   {% for ing in ingredients %}
     <li>{{ ing['quantity'] }} {{ ing['unit'] }} {{ ing['name'] }}</li>
@@ -74,4 +100,8 @@
       onsubmit="return confirm('Delete this recipe?');">
   <button type="submit" class="btn-danger">Delete</button>
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='cook-mode.js') }}" defer></script>
 {% endblock %}

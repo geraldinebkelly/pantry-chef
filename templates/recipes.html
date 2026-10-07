@@ -4,6 +4,15 @@
 <h1>Recipes</h1>
 <p><a class="btn" href="{{ url_for('new_recipe') }}">+ Add recipe manually</a></p>
 
+<form id="cook-list-form" method="get" action="{{ url_for('shopping_list') }}"></form>
+{% if recipes %}
+<div class="cook-list-bar">
+  <span class="hint">Tick what you're planning to cook, then generate one combined
+  shopping list for all of it.</span>
+  <button type="submit" form="cook-list-form" class="btn-secondary">Generate shopping list</button>
+</div>
+{% endif %}
+
 {% if all_courses %}
 <div class="filter-bar">
   <a class="filter-chip {{ 'active' if not selected_course }}" href="{{ url_for('list_recipes', cuisine=selected_cuisine) }}">All courses</a>
@@ -34,6 +43,9 @@
 <div class="recipe-tile-grid">
   {% for r in recipes %}
   <div class="recipe-tile">
+    <label class="recipe-tile-check no-print" title="Add to shopping list selection">
+      <input type="checkbox" name="recipe_id" value="{{ r['id'] }}" form="cook-list-form">
+    </label>
     <a class="recipe-tile-link" href="{{ url_for('view_recipe', recipe_id=r['id']) }}">
       <div class="recipe-tile-photo">
         {% if cover_photos.get(r['id']) %}
