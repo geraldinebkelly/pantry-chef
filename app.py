@@ -113,6 +113,10 @@ def import_recipe():
     return render_template("import.html")
 
 
+def _split_tags(value):
+    return [t.strip() for t in (value or "").split(",") if t.strip()]
+
+
 @app.route("/recipes")
 def list_recipes():
     conn = get_connection()
@@ -129,7 +133,25 @@ def list_recipes():
     cover_photos = {}
     for row in photo_rows:
         cover_photos.setdefault(row["recipe_id"], row["file_name"])
-    return render_template("recipes.html", recipes=recipes, cover_photos=cover_photos)
+
+    all_cuisines = sorted({tag for r in recipes for tag in _split_tags(r["cuisine"])})
+    all_courses = sorted({tag for r in recipes for tag in _split_tags(r["course"])})
+    selected_cuisine = request.args.get("cuisine", "").strip()
+    selected_course = request.args.get("course", "").strip()
+    if selected_cuisine:
+        recipes = [r for r in recipes if selected_cuisine in _split_tags(r["cuisine"])]
+    if selected_course:
+        recipes = [r for r in recipes if selected_course in _split_tags(r["course"])]
+
+    return render_template(
+        "recipes.html",
+        recipes=recipes,
+        cover_photos=cover_photos,
+        all_courses=all_courses,
+        selected_course=selected_course,
+        all_cuisines=all_cuisines,
+        selected_cuisine=selected_cuisine,
+    )
 
 
 @app.route("/recipes/new", methods=["GET", "POST"])
@@ -139,8 +161,8 @@ def new_recipe():
         try:
             cur = conn.execute(
                 "INSERT INTO recipes (title, source_pdf, instructions, notes, nutrition, "
-                "prep_time, cook_time, total_time, servings, is_draft) "
-                "VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, 0)",
+                "prep_time, cook_time, total_time, servings, cuisine, course, is_draft) "
+                "VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
                 (
                     request.form["title"].strip(),
                     request.form.get("instructions", "").strip(),
@@ -150,6 +172,8 @@ def new_recipe():
                     request.form.get("cook_time", "").strip(),
                     request.form.get("total_time", "").strip(),
                     request.form.get("servings", "").strip(),
+                    request.form.get("cuisine", "").strip(),
+                    request.form.get("course", "").strip(),
                 ),
             )
             recipe_id = cur.lastrowid
@@ -197,8 +221,8 @@ def edit_recipe(recipe_id):
         if request.method == "POST":
             conn.execute(
                 "UPDATE recipes SET title = ?, instructions = ?, notes = ?, nutrition = ?, "
-                "prep_time = ?, cook_time = ?, total_time = ?, servings = ?, is_draft = 0 "
-                "WHERE id = ?",
+                "prep_time = ?, cook_time = ?, total_time = ?, servings = ?, cuisine = ?, course = ?, "
+                "is_draft = 0 WHERE id = ?",
                 (
                     request.form["title"].strip(),
                     request.form.get("instructions", "").strip(),
@@ -208,6 +232,8 @@ def edit_recipe(recipe_id):
                     request.form.get("cook_time", "").strip(),
                     request.form.get("total_time", "").strip(),
                     request.form.get("servings", "").strip(),
+                    request.form.get("cuisine", "").strip(),
+                    request.form.get("course", "").strip(),
                     recipe_id,
                 ),
             )

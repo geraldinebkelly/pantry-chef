@@ -15,6 +15,8 @@ _RECIPE_COLUMN_ADDITIONS = {
     "cook_time": "TEXT DEFAULT ''",
     "total_time": "TEXT DEFAULT ''",
     "servings": "TEXT DEFAULT ''",
+    "cuisine": "TEXT DEFAULT ''",
+    "course": "TEXT DEFAULT ''",
 }
 
 SCHEMA = """
@@ -29,6 +31,8 @@ CREATE TABLE IF NOT EXISTS recipes (
     cook_time TEXT DEFAULT '',
     total_time TEXT DEFAULT '',
     servings TEXT DEFAULT '',
+    cuisine TEXT DEFAULT '',
+    course TEXT DEFAULT '',
     is_draft INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -84,8 +88,8 @@ def insert_draft_recipe(conn, parsed: dict, source_pdf: str) -> int:
     found in the PDF. Returns the new recipe id."""
     cur = conn.execute(
         "INSERT INTO recipes (title, source_pdf, instructions, notes, nutrition, "
-        "prep_time, cook_time, total_time, servings, is_draft) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+        "prep_time, cook_time, total_time, servings, cuisine, course, is_draft) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
         (
             parsed["title"],
             source_pdf,
@@ -96,6 +100,8 @@ def insert_draft_recipe(conn, parsed: dict, source_pdf: str) -> int:
             parsed.get("cook_time", ""),
             parsed.get("total_time", ""),
             parsed.get("servings", ""),
+            parsed.get("cuisine", ""),
+            parsed.get("course", ""),
         ),
     )
     recipe_id = cur.lastrowid

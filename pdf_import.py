@@ -150,8 +150,41 @@ _SERVINGS_RE = re.compile(
     r"(\d+)\s*Servings\s*(?:[-–]\s*(\d+))?\s*([a-zA-Z](?:[a-zA-Z ]*[a-zA-Z])?)?\s*Tap or hover to scale"
 )
 
+# Between the time block and the star rating, these exports print the
+# recipe's course and cuisine tags run together with no delimiter telling
+# them apart ("Mains, Stir Fries Chinese, Sichuan" - "Mains, Stir Fries" is
+# the course, "Chinese, Sichuan" the cuisine). Rather than guess the split,
+# pull out any known cuisine name found in that block. A couple of the
+# site's own tag spellings are folded into the closest standard cuisine.
+_CUISINES = [
+    "African", "American", "Arabic", "Asian", "British", "Cajun", "Cantonese",
+    "Caribbean", "Chinese", "Cuban", "English", "European", "French", "German",
+    "Greek", "Hawaiian", "Indian", "Indonesian", "Italian", "Jamaican",
+    "Japanese", "Korean", "Lebanese", "Malaysian", "Mediterranean", "Mexican",
+    "Middle Eastern", "Moroccan", "Persian", "Peruvian", "Polish",
+    "Portuguese", "Russian", "Sichuan", "Singaporean", "Spanish", "Szechuan",
+    "Thai", "Turkish", "Vietnamese", "Western",
+]
+_CUISINE_SYNONYMS = {"korean fusion": "Korean", "mexican-esque": "Mexican", "szechuan": "Sichuan"}
+_CUISINE_LOOKUP = {c.lower(): c for c in _CUISINES}
+_CUISINE_LOOKUP.update(_CUISINE_SYNONYMS)
+_CUISINE_RE = re.compile(
+    "|".join(re.escape(phrase) for phrase in sorted(_CUISINE_LOOKUP, key=len, reverse=True)),
+    re.IGNORECASE,
+)
 
-def _extract_duration(text: str, start: int) -> str:
+_RATING_RE = re.compile(r"\d+(?:\.\d+)?\s*from\s*\d+\s*votes", re.IGNORECASE)
+
+# Whatever's left in the block after the cuisine names are stripped out is
+# the course/meal-type tags (e.g. "Mains", "Side Dish", "Salad"). The site
+# spells the same course inconsistently ("Main" vs "Mains" vs "Meals" all
+# mean the same slot in a meal) - fold those down to one canonical tag so
+# filtering isn't fragmented across near-duplicates.
+_COURSE_SYNONYMS = {"main": "Mains", "meals": "Mains", "stir fries": "Stir Fry"}
+
+
+def _extract_duration(text: str, start: int):
+    """Returns (formatted duration, index just past the consumed tokens)."""
     parts = []
     pos = start
     while True:
@@ -161,17 +194,54 @@ def _extract_duration(text: str, start: int) -> str:
         num, unit = match.group(1), match.group(2)
         parts.append(f"{num} {unit}{'s' if num != '1' else ''}")
         pos = match.end()
-    return " ".join(parts)
+    return " ".join(parts), pos
 
 
 def extract_recipe_meta(text: str) -> dict:
-    """Best-effort extraction of prep/cook/total time and servings from a
-    WP Recipe Maker-style export. Any field not found is left as ""."""
-    meta = {"prep_time": "", "cook_time": "", "total_time": "", "servings": ""}
-    for label, key in (("Prep:", "prep_time"), ("Cook:", "cook_time"), ("Total:", "total_time")):
-        match = re.search(re.escape(label) + r"\s*", text)
-        if match:
-            meta[key] = _extract_duration(text, match.end())
+    """Best-effort extraction of prep/cook/total time, servings and cuisine
+    from a WP Recipe Maker-style export. Any field not found is left as ""."""
+    meta = {"prep_time": "", "cook_time": "", "total_time": "", "servings": "", "cuisine": "", "course": ""}
+    duration_end = 0
+    # "Marinating:" (sometimes "Marinating time:", sometimes with a typo'd
+    # double colon) isn't a field we keep, but it still occupies duration
+    # tokens right before the course/cuisine block on recipes with no
+    # "Total:" - skip over it too so it doesn't leak into the course text.
+    label_patterns = (
+        (r"Prep:", "prep_time"),
+        (r"Cook:", "cook_time"),
+        (r"Marinating(?:\s+time)?:+", None),
+        (r"Total:", "total_time"),
+    )
+    for pattern, key in label_patterns:
+        label_match = re.search(pattern + r"\s*", text)
+        if label_match:
+            value, end_pos = _extract_duration(text, label_match.end())
+            if key:
+                meta[key] = value
+            # The course/cuisine block always follows whichever of these
+            # labels appears last - not necessarily "Total:", since some
+            # recipes omit it (e.g. a salad with no cook time).
+            duration_end = max(duration_end, end_pos)
+
+    rating_match = _RATING_RE.search(text)
+    if duration_end and rating_match and rating_match.start() > duration_end:
+        block = text[duration_end:rating_match.start()]
+        found = []
+        for match in _CUISINE_RE.finditer(block):
+            canonical = _CUISINE_LOOKUP[match.group(0).lower()]
+            if canonical not in found:
+                found.append(canonical)
+        meta["cuisine"] = ", ".join(found)
+
+        courses = []
+        for tag in _CUISINE_RE.sub("", block).split(","):
+            tag = tag.strip()
+            if not tag:
+                continue
+            canonical = _COURSE_SYNONYMS.get(tag.lower(), tag)
+            if canonical not in courses:
+                courses.append(canonical)
+        meta["course"] = ", ".join(courses)
 
     match = _SERVINGS_RE.search(text)
     if match:
@@ -260,6 +330,8 @@ def parse_recipe_text(text: str, fallback_title: str) -> dict:
         "cook_time": meta["cook_time"],
         "total_time": meta["total_time"],
         "servings": meta["servings"],
+        "cuisine": meta["cuisine"],
+        "course": meta["course"],
     }
 
 

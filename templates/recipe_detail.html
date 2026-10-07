@@ -5,6 +5,17 @@
   {% if recipe['is_draft'] %}<span class="badge badge-draft">draft</span>{% endif %}
 </h1>
 
+{% if recipe['course'] or recipe['cuisine'] %}
+<p class="cuisine-tags">
+  {% for tag in recipe['course'].split(',') if tag.strip() %}
+  <a class="badge badge-course" href="{{ url_for('list_recipes', course=tag.strip()) }}">{{ tag.strip() }}</a>
+  {% endfor %}
+  {% for tag in recipe['cuisine'].split(',') if tag.strip() %}
+  <a class="badge badge-cuisine" href="{{ url_for('list_recipes', cuisine=tag.strip()) }}">{{ tag.strip() }}</a>
+  {% endfor %}
+</p>
+{% endif %}
+
 {% set meta_fields = [
   ('Prep Time', recipe['prep_time']),
   ('Cook Time', recipe['cook_time']),
