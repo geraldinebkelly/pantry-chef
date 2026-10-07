@@ -459,16 +459,19 @@ def build_shopping_list(recipe_ids):
     total_count = sum(len(items) for items in categorized.values())
     swaps = find_swaps((key, data["name"]) for key, data in merged_items.items())
 
+    # Mirrors the on-page/printed layout: amount on the item's own line,
+    # the recipe(s) it's for indented underneath - rather than crammed
+    # onto one line - so the emailed list reads the same way.
     body_lines = []
     for cat, items in categorized.items():
         body_lines.append(cat.upper())
         for item in items:
-            line = f"- {item['name']}"
+            line = f"☐ {item['name']}"
             if item["amount"]:
                 line += f" ({item['amount']})"
-            if item["recipes"]:
-                line += f" [{item['recipes']}]"
             body_lines.append(line)
+            if item["recipes"]:
+                body_lines.append(f"    for: {item['recipes']}")
         body_lines.append("")
     body_text = "\r\n".join(body_lines).strip()
 
@@ -508,7 +511,10 @@ def send_shopping_list():
         email_status = {"ok": False, "message": "Enter an email address first."}
     else:
         try:
-            send_shopping_list_email(to_address, EMAIL_SUBJECT, body_text)
+            body_html = render_template(
+                "shopping_list_email.html", categorized=categorized, total_count=total_count
+            )
+            send_shopping_list_email(to_address, EMAIL_SUBJECT, body_text, body_html)
             email_status = {"ok": True, "message": f"Sent to {to_address}."}
         except Exception as exc:
             email_status = {"ok": False, "message": str(exc)}

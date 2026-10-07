@@ -8,8 +8,11 @@ from email.message import EmailMessage
 from env_config import smtp_settings
 
 
-def send_shopping_list_email(to_address: str, subject: str, body_text: str):
-    """Raises RuntimeError (missing config) or smtplib exceptions on failure."""
+def send_shopping_list_email(to_address: str, subject: str, body_text: str, body_html: str = None):
+    """Raises RuntimeError (missing config) or smtplib exceptions on failure.
+    When body_html is given, the email is sent as text+HTML alternatives -
+    HTML-capable clients show the styled version (matching the printed
+    list), everything else falls back to the plain text."""
     settings, missing = smtp_settings()
     if missing:
         raise RuntimeError(
@@ -22,6 +25,8 @@ def send_shopping_list_email(to_address: str, subject: str, body_text: str):
     msg["From"] = settings["SMTP_FROM"]
     msg["To"] = to_address
     msg.set_content(body_text)
+    if body_html:
+        msg.add_alternative(body_html, subtype="html")
 
     port = int(settings["SMTP_PORT"])
     with smtplib.SMTP(settings["SMTP_HOST"], port, timeout=15) as server:
