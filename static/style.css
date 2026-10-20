@@ -28,7 +28,12 @@ a:hover { color: var(--accent); }
 
 ::selection { background: var(--accent-light); color: var(--accent-dark); }
 
-input[type=checkbox] { accent-color: var(--accent); }
+input[type=checkbox] {
+  accent-color: var(--accent);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
 
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -268,7 +273,7 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 ul.plain li { padding: 4px 0; }
 
 .checkbox-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; }
-.checkbox-row input { width: auto; margin-top: 4px; }
+.checkbox-row input { margin-top: 4px; flex-shrink: 0; }
 .item-amount { color: var(--muted); font-weight: 400; }
 .item-recipes { color: var(--muted); font-size: 0.85rem; font-style: italic; }
 .checkbox-row.crossed-off { opacity: 0.55; }
@@ -313,7 +318,7 @@ ul.plain li { padding: 4px 0; }
   padding: 4px;
   box-shadow: var(--shadow-sm);
 }
-.recipe-tile-check input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+.recipe-tile-check input { width: 20px; height: 20px; margin: 0; cursor: pointer; }
 
 .cook-list-bar {
   display: flex;
