@@ -4,22 +4,25 @@
 <h1>Add a recipe</h1>
 
 {% if errors %}
-<div class="card">
+<dialog id="import-error-dialog">
   <h2>Couldn't import</h2>
   <ul class="plain">
     {% for error in errors %}
     <li>{{ error }}</li>
     {% endfor %}
   </ul>
-</div>
+  <form method="dialog">
+    <button type="submit" class="btn-secondary">Close</button>
+  </form>
+</dialog>
+<script>document.getElementById("import-error-dialog").showModal();</script>
 {% endif %}
 
 <div class="card">
   <h2>From a web page</h2>
-  <p>Paste one or more recipe page URLs (one per line, up to {{ max_import_urls }} at a time).
-  Most recipe sites publish structured data for the same ingredient/step details used in
-  search results - this reads that directly, no copy-pasting required. A site that doesn't
-  publish it can't be imported this way; use the PDF import or add it by hand instead.</p>
+  <p>Paste up to {{ max_import_urls }} recipe page URLs, one per line, and we'll bring in the
+  ingredients, steps, and photos automatically. If a site isn't supported, use the PDF import
+  or add the recipe by hand instead.</p>
   <form method="post" id="url-import-form">
     <label for="recipe_urls">Recipe URL(s)</label>
     <textarea id="recipe_urls" name="recipe_urls" rows="4" placeholder="https://example.com/some-recipe"></textarea>

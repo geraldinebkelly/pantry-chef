@@ -126,8 +126,8 @@ def import_recipe():
             for url in urls:
                 try:
                     parsed = import_url(url, fallback_title=url)
-                except RecipeImportError as exc:
-                    errors.append(f"{url} - {exc}")
+                except RecipeImportError:
+                    errors.append(f"{url} - this site isn't supported for automatic import. Try the PDF import instead.")
                     continue
                 image_url = parsed.pop("image_url", "")
                 parsed["photos"] = download_photo(image_url, PHOTOS_DIR, uuid.uuid4().hex)
