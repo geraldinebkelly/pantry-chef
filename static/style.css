@@ -190,6 +190,23 @@ button.loading .btn-spinner { display: inline-block; }
 #cook-mode-toggle { display: block; margin-top: 12px; }
 #cook-mode-toggle.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 #cook-mode-toggle:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.cook-steps {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.cook-step-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cook-step-nav button { margin: 0; }
+.cook-step-counter { color: var(--muted); font-weight: 600; font-size: 0.9rem; }
+.cook-step-text { font-size: 1.3rem; line-height: 1.5; margin: 16px 0; }
+.cook-step-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cook-step-actions button { margin: 0; }
+.cook-step-timer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cook-timer-clock { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent-dark); }
+.cook-timer-done { font-weight: 700; color: var(--accent-dark); animation: cook-timer-pulse 1s ease-in-out infinite; }
+@keyframes cook-timer-pulse { 50% { opacity: 0.4; } }
+.cook-timer-custom-input { width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--ink); font-family: inherit; }
 .btn-danger { background: transparent; color: #b23a3a; border: 1px solid #b23a3a; }
 .btn-danger:hover { background: #fbe9e9; }
 
@@ -444,4 +461,5 @@ ul.plain li { padding: 4px 0; }
 
 @media print {
   .topbar, .no-print { display: none; }
+  #instructions-full[hidden] { display: block !important; }
 }

@@ -77,7 +77,21 @@
 
 <div class="card">
   <h2>Instructions</h2>
-  <p style="white-space: pre-wrap;">{{ recipe['instructions'] or 'No instructions saved.' }}</p>
+  <p id="instructions-full" style="white-space: pre-wrap;">{{ recipe['instructions'] or 'No instructions saved.' }}</p>
+
+  <div id="cook-steps" class="cook-steps no-print" hidden>
+    <div class="cook-step-nav">
+      <button type="button" id="cook-step-prev" class="btn-secondary">← Prev</button>
+      <span id="cook-step-counter" class="cook-step-counter"></span>
+      <button type="button" id="cook-step-next" class="btn-secondary">Next →</button>
+    </div>
+    <p id="cook-step-text" class="cook-step-text"></p>
+    <div class="cook-step-actions">
+      <button type="button" id="cook-step-read" class="btn-secondary">🔊 Read aloud</button>
+      <span id="cook-step-timer" class="cook-step-timer"></span>
+    </div>
+  </div>
+  <script type="application/json" id="recipe-instructions-data">{{ (recipe['instructions'] or '')|tojson }}</script>
 </div>
 
 {% if recipe['notes'] %}
@@ -112,4 +126,5 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='cook-mode.js') }}" defer></script>
+<script src="{{ url_for('static', filename='cook-steps.js') }}" defer></script>
 {% endblock %}

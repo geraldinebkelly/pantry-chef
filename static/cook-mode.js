@@ -1,20 +1,16 @@
-// Cook Mode: keeps the screen from locking while a recipe is open, using
-// the Screen Wake Lock API. The browser releases the lock automatically
-// whenever the tab is hidden (switching apps, locking the phone) - if Cook
-// Mode is still toggled on, it's re-requested once the tab is visible
-// again, since the lock itself can't survive that.
+// Cook Mode: switches the Instructions card to one-step-at-a-time view
+// (see cook-steps.js) and, where supported, keeps the screen from locking
+// via the Screen Wake Lock API. The wake lock is a nice-to-have - step
+// mode, timers and read-aloud all work fine without it, so a browser that
+// doesn't support it still gets a usable Cook Mode toggle instead of a
+// disabled button.
 (function () {
   const toggle = document.getElementById("cook-mode-toggle");
   if (!toggle) return;
 
-  if (!("wakeLock" in navigator)) {
-    toggle.disabled = true;
-    toggle.textContent = "🔆 Cook Mode (not supported in this browser)";
-    return;
-  }
-
+  const wakeLockSupported = "wakeLock" in navigator;
   let wakeLock = null;
-  let wantsActive = false;
+  let active = false;
 
   function setLabel(isOn) {
     toggle.textContent = isOn ? "🔆 Cook Mode: On" : "🔆 Cook Mode: Off";
@@ -22,40 +18,41 @@
     toggle.setAttribute("aria-pressed", String(isOn));
   }
 
-  async function acquire() {
+  async function acquireWakeLock() {
+    if (!wakeLockSupported) return;
     try {
       wakeLock = await navigator.wakeLock.request("screen");
-      setLabel(true);
       wakeLock.addEventListener("release", () => {
         wakeLock = null;
       });
     } catch (err) {
-      wantsActive = false;
-      setLabel(false);
+      // Screen staying awake is a bonus, not a requirement for Cook Mode.
     }
   }
 
-  function release() {
-    wantsActive = false;
+  function releaseWakeLock() {
     if (wakeLock) {
       wakeLock.release();
       wakeLock = null;
     }
-    setLabel(false);
   }
 
-  toggle.addEventListener("click", () => {
-    if (wantsActive) {
-      release();
+  function setActive(isOn) {
+    active = isOn;
+    setLabel(isOn);
+    if (isOn) {
+      acquireWakeLock();
     } else {
-      wantsActive = true;
-      acquire();
+      releaseWakeLock();
     }
-  });
+    document.dispatchEvent(new CustomEvent("cookmode:change", { detail: { active: isOn } }));
+  }
+
+  toggle.addEventListener("click", () => setActive(!active));
 
   document.addEventListener("visibilitychange", () => {
-    if (wantsActive && document.visibilityState === "visible" && !wakeLock) {
-      acquire();
+    if (active && document.visibilityState === "visible" && !wakeLock) {
+      acquireWakeLock();
     }
   });
 })();
