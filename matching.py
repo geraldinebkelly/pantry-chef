@@ -20,6 +20,16 @@ _SYNONYMS = {
 }
 _MEAT_NOUNS = {"beef", "pork", "lamb", "chicken", "turkey", "veal", "venison", "goat", "duck"}
 
+# A named cheese variety already says "this is a cheese" - the generic
+# "cheese" word alongside it (as in "ricotta cheese") is redundant and
+# would otherwise stop a plain pantry entry of "ricotta" from matching a
+# recipe ingredient of "ricotta cheese" (different word sets -> no match).
+_CHEESE_VARIETIES = {
+    "ricotta", "mozzarella", "parmesan", "cheddar", "feta", "mascarpone",
+    "brie", "gouda", "halloumi", "paneer", "gruyere", "provolone",
+    "camembert", "stilton", "manchego", "haloumi",
+}
+
 
 _OR_SPLIT_RE = re.compile(r"\bor\b")
 
@@ -62,6 +72,8 @@ def _normalize_words(text: str) -> str:
         # the same ingredient. Elsewhere (e.g. "ground cloves") it's kept,
         # since that's the spice itself.
         words.discard("clove")
+    if "cheese" in words and words & _CHEESE_VARIETIES:
+        words.discard("cheese")
     return " ".join(sorted(words))
 
 
