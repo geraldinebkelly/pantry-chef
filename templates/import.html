@@ -36,9 +36,9 @@
 
 <div class="card">
   <h2>From a PDF</h2>
-  <p>Upload one or more recipe PDFs. Each one is parsed automatically and saved
-  right away - PDF layouts vary a lot, so it's worth a quick look afterward;
-  anything the parser got wrong can be fixed from the recipe's Edit page.</p>
+  <p>Upload up to {{ max_import_pdfs }} recipe PDFs at a time. Each one is parsed
+  automatically and saved right away - PDF layouts vary a lot, so it's worth a quick
+  look afterward; anything the parser got wrong can be fixed from the recipe's Edit page.</p>
   <form method="post" enctype="multipart/form-data" id="import-form">
     <label for="pdf_files">Recipe PDF(s)</label>
     <div id="pdf-drop-zone" class="drop-zone">
