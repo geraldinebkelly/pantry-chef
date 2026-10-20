@@ -6,7 +6,10 @@ rather than being dropped from the list.
 """
 from matching import normalize_name
 
-CATEGORY_ORDER = ["Produce", "Proteins", "Dairy & Alternatives", "Grains & Pantry"]
+CATEGORY_ORDER = [
+    "Produce", "Proteins", "Dairy & Alternatives", "Bread and Cereals",
+    "Canned and Jar Goods", "Beverages", "Grains & Pantry",
+]
 
 _PRODUCE_WORDS = {
     "banana", "apple", "berry", "strawberry", "blueberry", "raspberry", "blackberry",
@@ -38,16 +41,32 @@ _DAIRY_WORDS = {
 }
 
 _PANTRY_WORDS = {
-    "rice", "pasta", "spaghetti", "noodle", "oat", "flour", "bread", "breadcrumb",
-    "panko", "oil", "vinegar", "salt", "sugar", "cumin", "paprika", "cinnamon",
-    "oregano", "cayenne", "sauce", "stock", "broth", "honey", "cornstarch",
-    "cornflour", "baking", "yeast", "cocoa", "chocolate", "spice", "seasoning",
-    "vanilla", "nutmeg", "clove", "cardamom", "turmeric", "bouillon", "wine",
-    "vermicelli", "couscous", "quinoa", "tortilla", "wrap", "pita", "bun",
-    "nut", "peanut", "cashew", "almond", "walnut", "sesame", "seed", "coconut",
-    "mirin", "sake", "gochujang", "miso", "curry", "powder", "extract", "bay",
-    "mayonnaise", "mayo", "ketchup", "hummus", "tzatziki", "salsa", "pesto",
-    "dressing", "marinade", "relish", "chutney", "jam", "syrup", "molasses",
+    "rice", "pasta", "spaghetti", "noodle", "flour", "oil", "vinegar", "salt",
+    "sugar", "cumin", "paprika", "cinnamon", "oregano", "cayenne", "sauce",
+    "stock", "broth", "cornstarch", "cornflour", "baking", "yeast", "cocoa",
+    "chocolate", "spice", "seasoning", "vanilla", "nutmeg", "clove",
+    "cardamom", "turmeric", "bouillon", "wine", "vermicelli", "couscous",
+    "quinoa", "nut", "peanut", "cashew", "almond", "walnut", "sesame", "seed",
+    "coconut", "mirin", "sake", "gochujang", "miso", "curry", "powder",
+    "extract", "bay", "dressing", "marinade",
+}
+
+_BREAD_CEREAL_WORDS = {
+    "bread", "breadcrumb", "panko", "bun", "roll", "bagel", "baguette",
+    "tortilla", "wrap", "pita", "toast", "cereal", "oat", "oats", "oatmeal",
+    "granola", "muesli", "cornflake",
+}
+
+_CANNED_JAR_WORDS = {
+    "jam", "marmalade", "chutney", "relish", "pickle", "pickles", "olive",
+    "caper", "mayonnaise", "mayo", "ketchup", "mustard", "salsa", "pesto",
+    "hummus", "tzatziki", "canned", "tinned", "preserve", "honey", "syrup",
+    "molasses", "nutella",
+}
+
+_BEVERAGE_WORDS = {
+    "juice", "soda", "cola", "water", "coffee", "tea", "beer", "cider",
+    "lemonade", "kombucha", "smoothie",
 }
 
 # Checked before the single-word sets, for words that mean different
@@ -73,6 +92,14 @@ _OVERRIDES = [
     ({"ground", "ginger"}, "Grains & Pantry"),
     ({"ground", "chilli"}, "Grains & Pantry"),
     ({"ground", "chili"}, "Grains & Pantry"),
+    # "butter" alone is dairy, but peanut butter is a jarred pantry good.
+    ({"peanut", "butter"}, "Canned and Jar Goods"),
+    # "oil"/"soda" alone would be fine as pantry, but they share a word with
+    # a jar/beverage item ("olive", "soda water") that'd otherwise win.
+    ({"olive", "oil"}, "Grains & Pantry"),
+    ({"baking", "soda"}, "Grains & Pantry"),
+    # Water chestnuts are a vegetable, not the "water" beverage word.
+    ({"water", "chestnut"}, "Produce"),
 ]
 
 
@@ -87,6 +114,15 @@ def categorize(raw_name: str) -> str:
         return "Proteins"
     if words & _DAIRY_WORDS:
         return "Dairy & Alternatives"
+    # Checked ahead of Produce: a jar/can/drink word (e.g. "strawberry jam",
+    # "orange juice", "canned tomatoes") should win over a fruit/veg word
+    # that's just along for the ride in the same ingredient name.
+    if words & _BREAD_CEREAL_WORDS:
+        return "Bread and Cereals"
+    if words & _CANNED_JAR_WORDS:
+        return "Canned and Jar Goods"
+    if words & _BEVERAGE_WORDS:
+        return "Beverages"
     if words & _PRODUCE_WORDS:
         return "Produce"
     return "Grains & Pantry"

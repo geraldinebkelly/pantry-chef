@@ -17,6 +17,7 @@ _RECIPE_COLUMN_ADDITIONS = {
     "servings": "TEXT DEFAULT ''",
     "cuisine": "TEXT DEFAULT ''",
     "course": "TEXT DEFAULT ''",
+    "personal_notes": "TEXT DEFAULT ''",
 }
 
 SCHEMA = """
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS recipes (
     servings TEXT DEFAULT '',
     cuisine TEXT DEFAULT '',
     course TEXT DEFAULT '',
+    personal_notes TEXT DEFAULT '',
     is_draft INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -83,13 +85,15 @@ def init_db():
         conn.close()
 
 
-def insert_draft_recipe(conn, parsed: dict, source_pdf: str) -> int:
-    """Insert a freshly-parsed PDF recipe as a draft, including any photos
-    found in the PDF. Returns the new recipe id."""
+def insert_recipe(conn, parsed: dict, source_pdf: str) -> int:
+    """Insert a freshly-parsed PDF recipe, including any photos found in
+    the PDF. Parsing is best-effort, so it's saved right away rather than
+    held as a draft - the user can edit anything the parser got wrong.
+    Returns the new recipe id."""
     cur = conn.execute(
         "INSERT INTO recipes (title, source_pdf, instructions, notes, nutrition, "
         "prep_time, cook_time, total_time, servings, cuisine, course, is_draft) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
         (
             parsed["title"],
             source_pdf,

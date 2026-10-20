@@ -4,6 +4,7 @@ import re
 import pdfplumber
 
 from matching import normalize_name
+from tags import CUISINES
 
 UNIT_WORDS = {
     "cup": "cup", "cups": "cup",
@@ -91,12 +92,29 @@ def _is_section_label(name: str, quantity: str, unit: str) -> bool:
     return not quantity and not unit and bool(_SECTION_LABEL_RE.match(name.strip()))
 
 
+# A PDF saved via a browser's own "Print to PDF" dialog (rather than a
+# site's dedicated recipe-PDF export) stamps a date/time + page-title
+# header and a URL + page-number footer on every single page. Left in,
+# the header's timestamp becomes the recipe's "title" (it's the first
+# line of text), and on a multi-page recipe these lines can turn up
+# mid-ingredient-list too - so they're stripped before anything else
+# parses the text.
+_PRINT_HEADER_RE = re.compile(r"^\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}\s*[AP]M\b.*$", re.MULTILINE)
+_PRINT_FOOTER_RE = re.compile(r"^https?://\S+\s+\d+/\d+\s*$", re.MULTILINE)
+
+
+def _strip_browser_print_chrome(text: str) -> str:
+    text = _PRINT_HEADER_RE.sub("", text)
+    text = _PRINT_FOOTER_RE.sub("", text)
+    return text
+
+
 def extract_text(pdf_path: str) -> str:
     pages_text = []
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             pages_text.append(page.extract_text() or "")
-    return "\n".join(pages_text)
+    return _strip_browser_print_chrome("\n".join(pages_text))
 
 
 def _replace_unicode_fractions(line: str) -> str:
@@ -156,17 +174,8 @@ _SERVINGS_RE = re.compile(
 # the course, "Chinese, Sichuan" the cuisine). Rather than guess the split,
 # pull out any known cuisine name found in that block. A couple of the
 # site's own tag spellings are folded into the closest standard cuisine.
-_CUISINES = [
-    "African", "American", "Arabic", "Asian", "British", "Cajun", "Cantonese",
-    "Caribbean", "Chinese", "Cuban", "English", "European", "French", "German",
-    "Greek", "Hawaiian", "Indian", "Indonesian", "Italian", "Jamaican",
-    "Japanese", "Korean", "Lebanese", "Malaysian", "Mediterranean", "Mexican",
-    "Middle Eastern", "Moroccan", "Persian", "Peruvian", "Polish",
-    "Portuguese", "Russian", "Sichuan", "Singaporean", "Spanish", "Szechuan",
-    "Thai", "Turkish", "Vietnamese", "Western",
-]
 _CUISINE_SYNONYMS = {"korean fusion": "Korean", "mexican-esque": "Mexican", "szechuan": "Sichuan"}
-_CUISINE_LOOKUP = {c.lower(): c for c in _CUISINES}
+_CUISINE_LOOKUP = {c.lower(): c for c in CUISINES}
 _CUISINE_LOOKUP.update(_CUISINE_SYNONYMS)
 _CUISINE_RE = re.compile(
     "|".join(re.escape(phrase) for phrase in sorted(_CUISINE_LOOKUP, key=len, reverse=True)),

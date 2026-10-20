@@ -5,7 +5,7 @@ against a recipe (by filename) are skipped.
 import os
 import uuid
 
-from db import PHOTOS_DIR, get_connection, init_db, insert_draft_recipe
+from db import PHOTOS_DIR, get_connection, init_db, insert_recipe
 from pdf_import import extract_photos, import_pdf
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "pdf_uploads")
@@ -27,14 +27,14 @@ def main():
             fallback_title = os.path.splitext(filename)[0].replace("_", " ").title()
             parsed = import_pdf(path, fallback_title)
             parsed["photos"] = extract_photos(path, PHOTOS_DIR, uuid.uuid4().hex)
-            insert_draft_recipe(conn, parsed, filename)
+            insert_recipe(conn, parsed, filename)
             imported += 1
             print(
                 f"Imported: {parsed['title']} "
                 f"({len(parsed['ingredients'])} ingredients, {len(parsed['photos'])} photo(s))"
             )
         conn.commit()
-        print(f"\nDone - {imported} new recipe(s) added as drafts, ready to review in the app.")
+        print(f"\nDone - {imported} new recipe(s) added.")
     finally:
         conn.close()
 

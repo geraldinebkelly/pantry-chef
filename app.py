@@ -1,12 +1,13 @@
 import os
 import uuid
+from datetime import date
 from urllib.parse import quote, urlencode
 
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 
 from categorize import CATEGORY_ORDER, categorize
-from db import DATA_DIR, PHOTOS_DIR, get_connection, init_db, insert_draft_recipe
+from db import DATA_DIR, PHOTOS_DIR, get_connection, init_db, insert_recipe
 from display_name import display_name
 from emailer import send_shopping_list_email
 from env_config import load_dotenv
@@ -14,6 +15,8 @@ from matching import normalize_name, rank_recipes, recipe_match, suggest_overlap
 from quantities import combine_amounts, parse_base_servings, scale_ingredients
 from substitutions import find_swaps
 from pdf_import import extract_photos, import_pdf, parse_ingredient_line
+from tags import CUISINES, COURSES
+from url_import import RecipeImportError, download_photo, import_url
 
 load_dotenv()
 
@@ -85,8 +88,10 @@ def dashboard():
 def import_recipe():
     if request.method == "POST":
         files = request.files.getlist("pdf_files")
+        urls = [u.strip() for u in request.form.get("recipe_urls", "").splitlines() if u.strip()]
         conn = get_connection()
         imported_ids = []
+        errors = []
         try:
             os.makedirs(UPLOAD_DIR, exist_ok=True)
             for f in files:
@@ -100,14 +105,28 @@ def import_recipe():
                 fallback_title = os.path.splitext(safe_name)[0].replace("_", " ").title()
                 parsed = import_pdf(stored_path, fallback_title)
                 parsed["photos"] = extract_photos(stored_path, PHOTOS_DIR, uuid.uuid4().hex)
-                recipe_id = insert_draft_recipe(conn, parsed, safe_name)
+                recipe_id = insert_recipe(conn, parsed, safe_name)
+                imported_ids.append(recipe_id)
+
+            for url in urls:
+                try:
+                    parsed = import_url(url, fallback_title=url)
+                except RecipeImportError as exc:
+                    errors.append(f"{url} - {exc}")
+                    continue
+                image_url = parsed.pop("image_url", "")
+                parsed["photos"] = download_photo(image_url, PHOTOS_DIR, uuid.uuid4().hex)
+                recipe_id = insert_recipe(conn, parsed, url)
                 imported_ids.append(recipe_id)
             conn.commit()
         finally:
             conn.close()
 
+        if not imported_ids and errors:
+            return render_template("import.html", errors=errors)
+
         if len(imported_ids) == 1:
-            return redirect(url_for("edit_recipe", recipe_id=imported_ids[0]))
+            return redirect(url_for("view_recipe", recipe_id=imported_ids[0]))
         return redirect(url_for("list_recipes"))
 
     return render_template("import.html")
@@ -115,6 +134,15 @@ def import_recipe():
 
 def _split_tags(value):
     return [t.strip() for t in (value or "").split(",") if t.strip()]
+
+
+def _tag_options(conn, column, canonical):
+    """Canonical tags plus any already in use, for the recipe form's
+    autocomplete - so a typo'd past entry still shows up next time instead
+    of only ever offering the fixed list."""
+    rows = conn.execute(f"SELECT DISTINCT {column} FROM recipes").fetchall()
+    used = {tag for row in rows for tag in _split_tags(row[column])}
+    return sorted(used | set(canonical))
 
 
 @app.route("/recipes")
@@ -183,7 +211,17 @@ def new_recipe():
         finally:
             conn.close()
         return redirect(url_for("view_recipe", recipe_id=recipe_id))
-    return render_template("recipe_form.html", recipe=None, ingredient_text="", photos=[], is_new=True)
+
+    conn = get_connection()
+    try:
+        cuisine_options = _tag_options(conn, "cuisine", CUISINES)
+        course_options = _tag_options(conn, "course", COURSES)
+    finally:
+        conn.close()
+    return render_template(
+        "recipe_form.html", recipe=None, ingredient_text="", photos=[], is_new=True,
+        cuisine_options=cuisine_options, course_options=course_options,
+    )
 
 
 @app.route("/recipes/<int:recipe_id>")
@@ -213,6 +251,20 @@ def view_recipe(recipe_id):
         target_servings=target_servings,
         scale_ratio=scale_ratio,
     )
+
+
+@app.route("/recipes/<int:recipe_id>/personal-notes", methods=["POST"])
+def save_personal_notes(recipe_id):
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE recipes SET personal_notes = ? WHERE id = ?",
+            (request.form.get("personal_notes", "").strip(), recipe_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("view_recipe", recipe_id=recipe_id))
 
 
 @app.route("/photos/<path:file_name>")
@@ -260,6 +312,8 @@ def edit_recipe(recipe_id):
             return redirect(url_for("view_recipe", recipe_id=recipe_id))
 
         recipe, ingredients, photos = fetch_recipe_with_ingredients(conn, recipe_id)
+        cuisine_options = _tag_options(conn, "cuisine", CUISINES)
+        course_options = _tag_options(conn, "course", COURSES)
     finally:
         conn.close()
 
@@ -268,7 +322,8 @@ def edit_recipe(recipe_id):
 
     ingredient_text = "\n".join(ingredient_line_from_row(r) for r in ingredients)
     return render_template(
-        "recipe_form.html", recipe=recipe, ingredient_text=ingredient_text, photos=photos, is_new=False
+        "recipe_form.html", recipe=recipe, ingredient_text=ingredient_text, photos=photos, is_new=False,
+        cuisine_options=cuisine_options, course_options=course_options,
     )
 
 
@@ -412,7 +467,9 @@ def plan_week():
     )
 
 
-EMAIL_SUBJECT = "PantryChef Shopping List"
+def email_subject():
+    today = date.today()
+    return f"PantryChef Shopping List for {today:%B} {today.day}, {today:%Y}"
 
 
 def build_shopping_list(recipe_ids):
@@ -458,11 +515,16 @@ def build_shopping_list(recipe_ids):
     }
     total_count = sum(len(items) for items in categorized.values())
     swaps = find_swaps((key, data["name"]) for key, data in merged_items.items())
+    recipe_titles = [g["recipe"]["title"] for g in groups]
 
     # Mirrors the on-page/printed layout: amount on the item's own line,
     # the recipe(s) it's for indented underneath - rather than crammed
     # onto one line - so the emailed list reads the same way.
     body_lines = []
+    if recipe_titles:
+        body_lines.append("MENU")
+        body_lines.extend(f"- {title}" for title in recipe_titles)
+        body_lines.append("")
     for cat, items in categorized.items():
         body_lines.append(cat.upper())
         for item in items:
@@ -475,15 +537,15 @@ def build_shopping_list(recipe_ids):
         body_lines.append("")
     body_text = "\r\n".join(body_lines).strip()
 
-    return groups, categorized, total_count, body_text, swaps
+    return groups, categorized, total_count, body_text, swaps, recipe_titles
 
 
 @app.route("/shopping-list")
 def shopping_list():
     recipe_ids = request.args.getlist("recipe_id", type=int)
-    groups, categorized, total_count, body_text, swaps = build_shopping_list(recipe_ids)
+    groups, categorized, total_count, body_text, swaps, recipe_titles = build_shopping_list(recipe_ids)
     mailto_href = "mailto:?" + urlencode(
-        {"subject": EMAIL_SUBJECT, "body": body_text}, quote_via=quote
+        {"subject": email_subject(), "body": body_text}, quote_via=quote
     )
 
     return render_template(
@@ -494,6 +556,7 @@ def shopping_list():
         mailto_href=mailto_href,
         recipe_ids=recipe_ids,
         swaps=swaps,
+        recipe_titles=recipe_titles,
     )
 
 
@@ -501,9 +564,9 @@ def shopping_list():
 def send_shopping_list():
     recipe_ids = [int(v) for v in request.form.getlist("recipe_id")]
     to_address = request.form.get("email", "").strip()
-    groups, categorized, total_count, body_text, swaps = build_shopping_list(recipe_ids)
+    groups, categorized, total_count, body_text, swaps, recipe_titles = build_shopping_list(recipe_ids)
     mailto_href = "mailto:?" + urlencode(
-        {"subject": EMAIL_SUBJECT, "body": body_text}, quote_via=quote
+        {"subject": email_subject(), "body": body_text}, quote_via=quote
     )
 
     email_status = None
@@ -512,9 +575,12 @@ def send_shopping_list():
     else:
         try:
             body_html = render_template(
-                "shopping_list_email.html", categorized=categorized, total_count=total_count
+                "shopping_list_email.html",
+                categorized=categorized,
+                total_count=total_count,
+                recipe_titles=recipe_titles,
             )
-            send_shopping_list_email(to_address, EMAIL_SUBJECT, body_text, body_html)
+            send_shopping_list_email(to_address, email_subject(), body_text, body_html)
             email_status = {"ok": True, "message": f"Sent to {to_address}."}
         except Exception as exc:
             email_status = {"ok": False, "message": str(exc)}
@@ -527,6 +593,7 @@ def send_shopping_list():
         mailto_href=mailto_href,
         recipe_ids=recipe_ids,
         swaps=swaps,
+        recipe_titles=recipe_titles,
         email_status=email_status,
         email_value=to_address,
     )

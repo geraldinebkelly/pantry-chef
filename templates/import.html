@@ -1,15 +1,63 @@
 {% extends "base.html" %}
-{% block title %}Import PDF - PantryChef{% endblock %}
+{% block title %}Add Recipe - PantryChef{% endblock %}
 {% block content %}
-<h1>Import recipes from PDF</h1>
+<h1>Add a recipe</h1>
+
+{% if errors %}
 <div class="card">
-  <p>Upload one or more recipe PDFs. Each one is parsed automatically, but PDF
-  layouts vary a lot - you'll get a chance to review and fix each recipe
-  before it's saved for good.</p>
-  <form method="post" enctype="multipart/form-data">
-    <label for="pdf_files">Recipe PDF(s)</label>
-    <input type="file" id="pdf_files" name="pdf_files" accept="application/pdf" multiple required>
-    <button type="submit">Upload &amp; parse</button>
+  <h2>Some imports didn't work</h2>
+  <ul class="plain">
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>From a web page</h2>
+  <p>Paste one or more recipe page URLs (one per line). Most recipe sites publish
+  structured data for the same ingredient/step details used in search results -
+  this reads that directly, no copy-pasting required. A site that doesn't publish
+  it can't be imported this way; use the PDF import or add it by hand instead.</p>
+  <form method="post" id="url-import-form">
+    <label for="recipe_urls">Recipe URL(s)</label>
+    <textarea id="recipe_urls" name="recipe_urls" rows="4" placeholder="https://example.com/some-recipe"></textarea>
+    <button type="submit" id="url-import-submit">
+      <span class="btn-spinner" aria-hidden="true"></span>
+      <span class="btn-label">Fetch &amp; parse</span>
+    </button>
+    <p id="url-import-wait-hint" class="hint" style="display:none;">Fetching can take a few seconds per page - hang tight, this won't take long.</p>
   </form>
 </div>
+
+<div class="card">
+  <h2>From a PDF</h2>
+  <p>Upload one or more recipe PDFs. Each one is parsed automatically and saved
+  right away - PDF layouts vary a lot, so it's worth a quick look afterward;
+  anything the parser got wrong can be fixed from the recipe's Edit page.</p>
+  <form method="post" enctype="multipart/form-data" id="import-form">
+    <label for="pdf_files">Recipe PDF(s)</label>
+    <div id="pdf-drop-zone" class="drop-zone">
+      <input type="file" id="pdf_files" name="pdf_files" accept="application/pdf" multiple required class="drop-zone-input">
+      <p class="drop-zone-text">📄 Drag and drop PDF files here, or click to browse</p>
+      <ul id="pdf-file-list" class="drop-zone-files"></ul>
+    </div>
+    <button type="submit" id="import-submit">
+      <span class="btn-spinner" aria-hidden="true"></span>
+      <span class="btn-label">Upload &amp; parse</span>
+    </button>
+    <p id="import-wait-hint" class="hint" style="display:none;">Parsing can take a few seconds per file - hang tight, this won't take long.</p>
+  </form>
+</div>
+
+<div class="card">
+  <h2>By hand</h2>
+  <p class="hint">No PDF or URL? Type the recipe in yourself instead.</p>
+  <a class="btn btn-secondary" href="{{ url_for('new_recipe') }}">+ Add recipe manually</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='drop-zone.js') }}" defer></script>
 {% endblock %}

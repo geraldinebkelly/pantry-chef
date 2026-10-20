@@ -2,7 +2,6 @@
 {% block title %}Recipes - PantryChef{% endblock %}
 {% block content %}
 <h1>Recipes</h1>
-<p><a class="btn" href="{{ url_for('new_recipe') }}">+ Add recipe manually</a></p>
 
 <form id="cook-list-form" method="get" action="{{ url_for('shopping_list') }}"></form>
 {% if recipes %}

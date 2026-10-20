@@ -8,6 +8,17 @@
 <a href="{{ url_for('matches') }}">What can I make?</a> and tick what you're planning to cook.</p></div>
 {% else %}
 
+{% if recipe_titles %}
+<div class="card">
+  <h2>Menu</h2>
+  <ul class="plain">
+    {% for g in groups %}
+    <li><a href="{{ url_for('view_recipe', recipe_id=g.recipe['id']) }}">{{ g.recipe['title'] }}</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
 <div class="card">
   <div class="ingredients-header">
     <h2>Everything to buy ({{ total_count }})</h2>

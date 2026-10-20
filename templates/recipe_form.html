@@ -55,12 +55,22 @@
   <div class="grid">
     <div>
       <label for="cuisine">Cuisine</label>
-      <input type="text" id="cuisine" name="cuisine" placeholder="Chinese, Sichuan" value="{{ recipe['cuisine'] if recipe else '' }}">
+      <input type="text" id="cuisine" name="cuisine" list="cuisine-options" placeholder="Chinese, Sichuan" value="{{ recipe['cuisine'] if recipe else '' }}">
+      <datalist id="cuisine-options">
+        {% for option in cuisine_options %}
+        <option value="{{ option }}">
+        {% endfor %}
+      </datalist>
       <div class="hint">Comma-separated if more than one, e.g. <code>Asian, Japanese</code></div>
     </div>
     <div>
       <label for="course">Course</label>
-      <input type="text" id="course" name="course" placeholder="Mains" value="{{ recipe['course'] if recipe else '' }}">
+      <input type="text" id="course" name="course" list="course-options" placeholder="Mains" value="{{ recipe['course'] if recipe else '' }}">
+      <datalist id="course-options">
+        {% for option in course_options %}
+        <option value="{{ option }}">
+        {% endfor %}
+      </datalist>
       <div class="hint">e.g. <code>Mains</code>, <code>Entree</code>, <code>Salad</code>, <code>Side Dish</code></div>
     </div>
   </div>

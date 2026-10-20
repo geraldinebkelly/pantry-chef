@@ -6,6 +6,15 @@
     <h1 style="font-family:Georgia,'Iowan Old Style','Palatino Linotype','Book Antiqua',serif;font-size:1.4rem;margin:0 0 4px;color:#2b2420;">Shopping list</h1>
     <p style="color:#7a6f63;font-size:0.9rem;margin:0 0 24px;">{{ total_count }} item{{ 's' if total_count != 1 else '' }} to buy</p>
 
+    {% if recipe_titles %}
+    <h2 style="font-family:Georgia,'Iowan Old Style','Palatino Linotype','Book Antiqua',serif;font-weight:700;font-size:0.95rem;text-transform:uppercase;letter-spacing:0.03em;color:#9c4e21;border-bottom:1px solid #e7ddd0;padding-bottom:4px;margin:0 0 10px;">Menu</h2>
+    <ul style="margin:0 0 20px;padding-left:20px;">
+      {% for title in recipe_titles %}
+      <li style="padding:2px 0;">{{ title }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
     {% if not total_count %}
     <p>Nothing missing - you already have everything for these recipes!</p>
     {% endif %}
