@@ -104,13 +104,54 @@ def _find_recipe_node(data):
     return None
 
 
+def _repair_json(text: str) -> str:
+    """Some sites' recipe plugins emit JSON-LD with a literal, un-escaped
+    '"' inside a string value - most often an inch mark in an ingredient
+    like `25cm/10" long` - which breaks strict parsing. Walk the text
+    tracking string state, and treat a quote as literal content (escaping
+    it) rather than a string terminator unless it's actually followed by
+    a JSON delimiter, so the rest of the document still parses."""
+    out = []
+    in_string = False
+    i, n = 0, len(text)
+    while i < n:
+        ch = text[i]
+        if in_string:
+            if ch == "\\" and i + 1 < n:
+                out.append(text[i:i + 2])
+                i += 2
+                continue
+            if ch == '"':
+                j = i + 1
+                while j < n and text[j] in " \t\r\n":
+                    j += 1
+                if j < n and text[j] in ",:}]":
+                    out.append(ch)
+                    in_string = False
+                else:
+                    out.append('\\"')
+                i += 1
+                continue
+            out.append(ch)
+            i += 1
+        else:
+            out.append(ch)
+            if ch == '"':
+                in_string = True
+            i += 1
+    return "".join(out)
+
+
 def _extract_recipe_json(html: str) -> dict:
     for match in _LD_JSON_RE.finditer(html):
         raw = unescape(match.group(1).strip())
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
-            continue
+            try:
+                data = json.loads(_repair_json(raw))
+            except json.JSONDecodeError:
+                continue
         node = _find_recipe_node(data)
         if node:
             return node
