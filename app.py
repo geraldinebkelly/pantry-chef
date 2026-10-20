@@ -136,6 +136,13 @@ def _split_tags(value):
     return [t.strip() for t in (value or "").split(",") if t.strip()]
 
 
+def _like_pattern(query):
+    """Escape SQL LIKE wildcards in free-text search input so a literal
+    '%' or '_' in a search term doesn't act as a wildcard."""
+    escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
 def _tag_options(conn, column, canonical):
     """Canonical tags plus any already in use, for the recipe form's
     autocomplete - so a typo'd past entry still shows up next time instead
@@ -147,6 +154,7 @@ def _tag_options(conn, column, canonical):
 
 @app.route("/recipes")
 def list_recipes():
+    query = request.args.get("q", "").strip()
     conn = get_connection()
     try:
         recipes = conn.execute(
@@ -155,6 +163,14 @@ def list_recipes():
         photo_rows = conn.execute(
             "SELECT recipe_id, file_name FROM recipe_photos ORDER BY recipe_id, position"
         ).fetchall()
+        ingredient_matches = set()
+        if query:
+            ingredient_matches = {
+                row["recipe_id"] for row in conn.execute(
+                    "SELECT DISTINCT recipe_id FROM ingredients WHERE name LIKE ? ESCAPE '\\'",
+                    (_like_pattern(query),),
+                ).fetchall()
+            }
     finally:
         conn.close()
     # First photo (by position) per recipe, used as the tile's cover image.
@@ -170,6 +186,12 @@ def list_recipes():
         recipes = [r for r in recipes if selected_cuisine in _split_tags(r["cuisine"])]
     if selected_course:
         recipes = [r for r in recipes if selected_course in _split_tags(r["course"])]
+    if query:
+        q_lower = query.lower()
+        recipes = [
+            r for r in recipes
+            if q_lower in r["title"].lower() or r["id"] in ingredient_matches
+        ]
 
     return render_template(
         "recipes.html",
@@ -179,6 +201,7 @@ def list_recipes():
         selected_course=selected_course,
         all_cuisines=all_cuisines,
         selected_cuisine=selected_cuisine,
+        query=query,
     )
 
 

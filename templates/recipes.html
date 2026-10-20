@@ -12,27 +12,35 @@
 </div>
 {% endif %}
 
+<form method="get" action="{{ url_for('list_recipes') }}" class="search-bar">
+  <input type="text" name="q" value="{{ query }}" placeholder="Search by title or ingredient...">
+  {% if selected_cuisine %}<input type="hidden" name="cuisine" value="{{ selected_cuisine }}">{% endif %}
+  {% if selected_course %}<input type="hidden" name="course" value="{{ selected_course }}">{% endif %}
+  <button type="submit" class="btn-secondary">Search</button>
+  {% if query %}<a class="btn-secondary" href="{{ url_for('list_recipes', cuisine=selected_cuisine, course=selected_course) }}">Clear</a>{% endif %}
+</form>
+
 {% if all_courses %}
 <div class="filter-bar">
-  <a class="filter-chip {{ 'active' if not selected_course }}" href="{{ url_for('list_recipes', cuisine=selected_cuisine) }}">All courses</a>
+  <a class="filter-chip {{ 'active' if not selected_course }}" href="{{ url_for('list_recipes', cuisine=selected_cuisine, q=query) }}">All courses</a>
   {% for c in all_courses %}
-  <a class="filter-chip {{ 'active' if selected_course == c }}" href="{{ url_for('list_recipes', course=c, cuisine=selected_cuisine) }}">{{ c }}</a>
+  <a class="filter-chip {{ 'active' if selected_course == c }}" href="{{ url_for('list_recipes', course=c, cuisine=selected_cuisine, q=query) }}">{{ c }}</a>
   {% endfor %}
 </div>
 {% endif %}
 
 {% if all_cuisines %}
 <div class="filter-bar">
-  <a class="filter-chip {{ 'active' if not selected_cuisine }}" href="{{ url_for('list_recipes', course=selected_course) }}">All cuisines</a>
+  <a class="filter-chip {{ 'active' if not selected_cuisine }}" href="{{ url_for('list_recipes', course=selected_course, q=query) }}">All cuisines</a>
   {% for c in all_cuisines %}
-  <a class="filter-chip {{ 'active' if selected_cuisine == c }}" href="{{ url_for('list_recipes', cuisine=c, course=selected_course) }}">{{ c }}</a>
+  <a class="filter-chip {{ 'active' if selected_cuisine == c }}" href="{{ url_for('list_recipes', cuisine=c, course=selected_course, q=query) }}">{{ c }}</a>
   {% endfor %}
 </div>
 {% endif %}
 
 {% if not recipes %}
 <div class="card">
-  {% if selected_cuisine or selected_course %}
+  {% if selected_cuisine or selected_course or query %}
   <p>No matching recipes. <a href="{{ url_for('list_recipes') }}">Clear filters</a></p>
   {% else %}
   <p>No recipes yet. <a href="{{ url_for('import_recipe') }}">Import a PDF</a> or add one manually.</p>

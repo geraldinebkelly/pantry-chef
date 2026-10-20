@@ -213,6 +213,16 @@ th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border);
 
 .cuisine-tags { margin: -4px 0 14px; display: flex; flex-wrap: wrap; gap: 6px; }
 
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.search-bar input[type=text] { width: auto; flex: 1 1 260px; }
+.search-bar button, .search-bar a { margin: 0; white-space: nowrap; }
+
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
