@@ -84,11 +84,26 @@ def dashboard():
     )
 
 
+MAX_IMPORT_URLS = 10
+
+
 @app.route("/import", methods=["GET", "POST"])
 def import_recipe():
     if request.method == "POST":
         files = request.files.getlist("pdf_files")
         urls = [u.strip() for u in request.form.get("recipe_urls", "").splitlines() if u.strip()]
+
+        if len(urls) > MAX_IMPORT_URLS:
+            return render_template(
+                "import.html",
+                errors=[
+                    f"That's {len(urls)} URLs - please paste {MAX_IMPORT_URLS} or fewer at a time "
+                    "(each page is fetched one by one, so a big batch can take a while and risks "
+                    "timing out)."
+                ],
+                max_import_urls=MAX_IMPORT_URLS,
+            )
+
         conn = get_connection()
         imported_ids = []
         errors = []
@@ -123,13 +138,13 @@ def import_recipe():
             conn.close()
 
         if not imported_ids and errors:
-            return render_template("import.html", errors=errors)
+            return render_template("import.html", errors=errors, max_import_urls=MAX_IMPORT_URLS)
 
         if len(imported_ids) == 1:
             return redirect(url_for("view_recipe", recipe_id=imported_ids[0]))
         return redirect(url_for("list_recipes"))
 
-    return render_template("import.html")
+    return render_template("import.html", max_import_urls=MAX_IMPORT_URLS)
 
 
 def _split_tags(value):

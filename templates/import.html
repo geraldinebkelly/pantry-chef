@@ -5,7 +5,7 @@
 
 {% if errors %}
 <div class="card">
-  <h2>Some imports didn't work</h2>
+  <h2>Couldn't import</h2>
   <ul class="plain">
     {% for error in errors %}
     <li>{{ error }}</li>
@@ -16,10 +16,10 @@
 
 <div class="card">
   <h2>From a web page</h2>
-  <p>Paste one or more recipe page URLs (one per line). Most recipe sites publish
-  structured data for the same ingredient/step details used in search results -
-  this reads that directly, no copy-pasting required. A site that doesn't publish
-  it can't be imported this way; use the PDF import or add it by hand instead.</p>
+  <p>Paste one or more recipe page URLs (one per line, up to {{ max_import_urls }} at a time).
+  Most recipe sites publish structured data for the same ingredient/step details used in
+  search results - this reads that directly, no copy-pasting required. A site that doesn't
+  publish it can't be imported this way; use the PDF import or add it by hand instead.</p>
   <form method="post" id="url-import-form">
     <label for="recipe_urls">Recipe URL(s)</label>
     <textarea id="recipe_urls" name="recipe_urls" rows="4" placeholder="https://example.com/some-recipe"></textarea>
