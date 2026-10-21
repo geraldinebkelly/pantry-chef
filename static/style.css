@@ -119,10 +119,6 @@ dialog button { margin: 0; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
 
-.stat { text-align: center; }
-.stat .num { font-size: 2rem; font-weight: 700; color: var(--accent-dark); }
-.stat .label { color: var(--muted); font-size: 0.9rem; }
-
 label { display: block; font-weight: 600; margin-bottom: 6px; margin-top: 14px; }
 input[type=text], input[type=email], textarea, input[type=file] {
   width: 100%;

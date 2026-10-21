@@ -65,19 +65,7 @@ def fetch_recipe_with_ingredients(conn, recipe_id):
 
 @app.route("/")
 def dashboard():
-    conn = get_connection()
-    try:
-        recipe_count = conn.execute(
-            "SELECT COUNT(*) c FROM recipes WHERE is_draft = 0"
-        ).fetchone()["c"]
-        pantry_count = conn.execute("SELECT COUNT(*) c FROM pantry_items").fetchone()["c"]
-    finally:
-        conn.close()
-    return render_template(
-        "dashboard.html",
-        recipe_count=recipe_count,
-        pantry_count=pantry_count,
-    )
+    return render_template("dashboard.html")
 
 
 MAX_IMPORT_URLS = 10
