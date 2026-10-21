@@ -12,7 +12,6 @@
 
 {% if searched %}
 <div class="card">
-  <button type="button" id="edit-pool-btn" class="btn-secondary no-print">✎ Edit recipe pool</button>
   {% if too_many_combos %}
   <p>That's too many recipes to compare every combination of {{ combo_size }} at once.
   Open "Recipe pool" below, uncheck some, then try again.</p>
@@ -57,14 +56,12 @@
 {% endif %}
 
 <form method="get" action="{{ url_for('plan_week') }}">
-  <details class="card" id="recipe-pool" {% if not searched %}open{% endif %}>
+  <details class="card" {% if not searched %}open{% endif %}>
     <summary><h2 style="display:inline;">Recipe pool</h2></summary>
 
     <div class="pool-filters no-print">
       <input type="text" id="pool-search" placeholder="Search by title..." autocomplete="off">
       <span id="pool-selected-count" class="hint"></span>
-      <button type="button" id="pool-select-all" class="btn-secondary">Select all</button>
-      <button type="button" id="pool-clear" class="btn-secondary">Clear selections</button>
     </div>
     {% if all_courses %}
     <div class="filter-bar">

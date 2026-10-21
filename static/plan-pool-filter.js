@@ -49,38 +49,6 @@
 
   items.forEach((item) => item.querySelector("input").addEventListener("change", updateSelectedCount));
 
-  const selectAllBtn = document.getElementById("pool-select-all");
-  if (selectAllBtn) {
-    selectAllBtn.addEventListener("click", () => {
-      items.forEach((item) => {
-        if (!item.hidden) item.querySelector("input").checked = true;
-      });
-      updateSelectedCount();
-    });
-  }
-
-  const clearBtn = document.getElementById("pool-clear");
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      items.forEach((item) => {
-        item.querySelector("input").checked = false;
-      });
-      updateSelectedCount();
-    });
-  }
-
-  // "Edit recipe pool" (shown alongside the results, after a search) jumps
-  // back to the same checklist instead of leaving it a mystery that it's
-  // the collapsed "Recipe pool" section below the results.
-  const editPoolBtn = document.getElementById("edit-pool-btn");
-  const poolDetails = document.getElementById("recipe-pool");
-  if (editPoolBtn && poolDetails) {
-    editPoolBtn.addEventListener("click", () => {
-      poolDetails.open = true;
-      poolDetails.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }
-
   applyFilters();
   updateSelectedCount();
 })();

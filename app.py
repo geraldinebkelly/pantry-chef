@@ -621,25 +621,6 @@ def build_shopping_list(recipe_ids):
     return groups, categorized, total_count, body_text, swaps, recipe_titles
 
 
-# Where "Generate shopping list" can be reached from, so the shopping list
-# page can offer a "back to where you came from" link instead of leaving
-# the only way back to be the nav bar (which doesn't restore any
-# selection/search/results state) or the browser's own back button.
-_BACK_LINK_LABELS = {
-    "/plan": "Plan a Week",
-    "/recipes": "Recipes",
-    "/matches": "What can I make?",
-}
-
-
-def _resolve_back_link(url):
-    if not url or not url.startswith(request.host_url):
-        return None
-    path = url[len(request.host_url) - 1:].split("?")[0]
-    label = _BACK_LINK_LABELS.get(path)
-    return {"url": url, "label": label} if label else None
-
-
 @app.route("/shopping-list")
 def shopping_list():
     recipe_ids = request.args.getlist("recipe_id", type=int)
@@ -657,7 +638,6 @@ def shopping_list():
         recipe_ids=recipe_ids,
         swaps=swaps,
         recipe_titles=recipe_titles,
-        back_link=_resolve_back_link(request.referrer),
     )
 
 
@@ -697,7 +677,6 @@ def send_shopping_list():
         recipe_titles=recipe_titles,
         email_status=email_status,
         email_value=to_address,
-        back_link=_resolve_back_link(request.form.get("back_url")),
     )
 
 
