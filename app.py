@@ -64,7 +64,7 @@ def fetch_recipe_with_ingredients(conn, recipe_id):
     return recipe, ingredients, photos
 
 
-SPOTLIGHT_PHOTO_COUNT = 6
+SPOTLIGHT_PHOTO_COUNT = 5
 
 
 @app.route("/")
