@@ -286,6 +286,7 @@ th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border);
   margin: 10px 0;
 }
 .pool-filters input[type=text] { width: auto; flex: 1 1 220px; }
+.pool-filters button { margin: 0; white-space: nowrap; }
 #pool-selected-count { white-space: nowrap; }
 .pool-item[hidden] { display: none; }
 

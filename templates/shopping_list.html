@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Shopping List - PantryChef{% endblock %}
 {% block content %}
+{% if back_link %}
+<p class="no-print"><a href="{{ back_link.url }}">← Back to {{ back_link.label }}</a></p>
+{% endif %}
 <h1>Shopping list</h1>
 
 {% if not groups %}
@@ -69,6 +72,7 @@
     {% for rid in recipe_ids %}
     <input type="hidden" name="recipe_id" value="{{ rid }}">
     {% endfor %}
+    {% if back_link %}<input type="hidden" name="back_url" value="{{ back_link.url }}">{% endif %}
     <label for="email">Send to</label>
     <input type="email" id="email" name="email" placeholder="you@example.com" value="{{ email_value or '' }}" required>
     <button type="submit">Send email</button>
