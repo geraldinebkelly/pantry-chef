@@ -58,12 +58,38 @@
 <form method="get" action="{{ url_for('plan_week') }}">
   <details class="card" {% if not searched %}open{% endif %}>
     <summary><h2 style="display:inline;">Recipe pool</h2></summary>
+
+    <div class="pool-filters no-print">
+      <input type="text" id="pool-search" placeholder="Search by title..." autocomplete="off">
+      <span id="pool-selected-count" class="hint"></span>
+    </div>
+    {% if all_courses %}
+    <div class="filter-bar">
+      <button type="button" class="filter-chip active" data-pool-filter="course" data-value="">All courses</button>
+      {% for c in all_courses %}
+      <button type="button" class="filter-chip" data-pool-filter="course" data-value="{{ c }}">{{ c }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if all_cuisines %}
+    <div class="filter-bar">
+      <button type="button" class="filter-chip active" data-pool-filter="cuisine" data-value="">All cuisines</button>
+      {% for c in all_cuisines %}
+      <button type="button" class="filter-chip" data-pool-filter="cuisine" data-value="{{ c }}">{{ c }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     {% for r in recipes %}
-    <label class="checkbox-row" style="margin:0;">
+    <label class="checkbox-row pool-item" style="margin:0;"
+           data-title="{{ r['title']|lower }}"
+           data-cuisine="{{ r['cuisine']|lower }}"
+           data-course="{{ r['course']|lower }}">
       <input type="checkbox" name="recipe_id" value="{{ r['id'] }}" {% if r['id'] in pool_ids %}checked{% endif %}>
       {{ r['title'] }}
     </label>
     {% endfor %}
+    <p id="pool-no-matches" class="hint" hidden>No recipes match that search/filter.</p>
 
     <label for="combo_size">Recipes per plan</label>
     <select id="combo_size" name="combo_size">
@@ -77,4 +103,8 @@
 </form>
 
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='plan-pool-filter.js') }}" defer></script>
 {% endblock %}

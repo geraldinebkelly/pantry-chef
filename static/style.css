@@ -264,15 +264,30 @@ th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border);
 .filter-chip {
   display: inline-block;
   padding: 5px 12px;
+  margin: 0;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--ink);
   text-decoration: none;
   font-size: 0.85rem;
+  font-weight: 400;
+  cursor: pointer;
 }
 .filter-chip:hover { border-color: var(--accent); }
 .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.pool-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0;
+}
+.pool-filters input[type=text] { width: auto; flex: 1 1 220px; }
+#pool-selected-count { white-space: nowrap; }
+.pool-item[hidden] { display: none; }
 
 .recipe-meta { color: var(--muted); font-size: 0.95rem; margin-top: -8px; margin-bottom: 20px; }
 .recipe-meta strong { color: var(--ink); }

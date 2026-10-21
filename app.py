@@ -532,6 +532,9 @@ def plan_week():
     finally:
         conn.close()
 
+    all_cuisines = sorted({tag for r in recipes for tag in _split_tags(r["cuisine"])})
+    all_courses = sorted({tag for r in recipes for tag in _split_tags(r["course"])})
+
     return render_template(
         "plan.html",
         recipes=recipes,
@@ -540,6 +543,8 @@ def plan_week():
         suggestions=suggestions,
         too_many_combos=too_many_combos,
         searched="find" in request.args,
+        all_cuisines=all_cuisines,
+        all_courses=all_courses,
     )
 
 
