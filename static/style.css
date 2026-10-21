@@ -88,7 +88,6 @@ h3 { font-size: 1.05rem; }
 .tagline {
   color: var(--muted);
   font-size: 1.05rem;
-  max-width: 640px;
   margin-top: -4px;
   margin-bottom: 24px;
 }
