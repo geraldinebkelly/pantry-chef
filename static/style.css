@@ -318,6 +318,37 @@ ul.plain li { padding: 4px 0; }
 }
 .category-heading:first-of-type { margin-top: 4px; }
 
+.photo-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 22px 0 28px;
+}
+.photo-strip-item {
+  position: relative;
+  display: block;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.photo-strip-item:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.photo-strip-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-strip-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 10px 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
 .recipe-tile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

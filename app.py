@@ -1,4 +1,5 @@
 import os
+import random
 import uuid
 from datetime import date
 from urllib.parse import quote, urlencode
@@ -63,9 +64,33 @@ def fetch_recipe_with_ingredients(conn, recipe_id):
     return recipe, ingredients, photos
 
 
+SPOTLIGHT_PHOTO_COUNT = 6
+
+
 @app.route("/")
 def dashboard():
-    return render_template("dashboard.html")
+    conn = get_connection()
+    try:
+        recipes = conn.execute("SELECT id, title FROM recipes WHERE is_draft = 0").fetchall()
+        photo_rows = conn.execute(
+            "SELECT recipe_id, file_name FROM recipe_photos ORDER BY recipe_id, position"
+        ).fetchall()
+    finally:
+        conn.close()
+
+    # First photo (by position) per recipe - same pattern as the Recipes
+    # page's cover photos - then a random handful for a bit of visual
+    # warmth on an otherwise text-only landing page.
+    cover_photos = {}
+    for row in photo_rows:
+        cover_photos.setdefault(row["recipe_id"], row["file_name"])
+    with_photos = [r for r in recipes if r["id"] in cover_photos]
+    spotlight = [
+        {"id": r["id"], "title": r["title"], "photo": cover_photos[r["id"]]}
+        for r in random.sample(with_photos, min(SPOTLIGHT_PHOTO_COUNT, len(with_photos)))
+    ]
+
+    return render_template("dashboard.html", spotlight=spotlight)
 
 
 MAX_IMPORT_URLS = 10
