@@ -318,6 +318,38 @@ ul.plain li { padding: 4px 0; }
 }
 .category-heading:first-of-type { margin-top: 4px; }
 
+.pantry-group { margin-bottom: 18px; }
+.pantry-group:last-child { margin-bottom: 0; }
+.pantry-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pantry-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.9rem;
+}
+.pantry-chip form { margin: 0; }
+.pantry-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.pantry-chip-remove:hover { background: #fbe9e9; color: #b23a3a; }
+
 .photo-strip {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

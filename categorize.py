@@ -11,6 +11,16 @@ CATEGORY_ORDER = [
     "Canned and Jar Goods", "Beverages", "Grains & Pantry",
 ]
 
+CATEGORY_EMOJI = {
+    "Produce": "🥬",
+    "Proteins": "🥩",
+    "Dairy & Alternatives": "🥛",
+    "Bread and Cereals": "🍞",
+    "Canned and Jar Goods": "🥫",
+    "Beverages": "🥤",
+    "Grains & Pantry": "🧂",
+}
+
 _PRODUCE_WORDS = {
     "banana", "apple", "berry", "strawberry", "blueberry", "raspberry", "blackberry",
     "lemon", "lime", "orange", "mango", "pineapple", "grape", "melon", "watermelon",

@@ -7,7 +7,7 @@ from urllib.parse import quote, urlencode
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 
-from categorize import CATEGORY_ORDER, categorize
+from categorize import CATEGORY_EMOJI, CATEGORY_ORDER, categorize
 from db import DATA_DIR, PHOTOS_DIR, get_connection, init_db, insert_recipe
 from display_name import display_name
 from emailer import send_shopping_list_email
@@ -418,7 +418,15 @@ def pantry():
         items = conn.execute("SELECT * FROM pantry_items ORDER BY name").fetchall()
     finally:
         conn.close()
-    return render_template("pantry.html", items=items)
+
+    grouped = {cat: [] for cat in CATEGORY_ORDER}
+    for item in items:
+        grouped[categorize(item["name"])].append(item)
+    grouped = [
+        {"name": cat, "emoji": CATEGORY_EMOJI[cat], "pantry_items": cat_items}
+        for cat, cat_items in grouped.items() if cat_items
+    ]
+    return render_template("pantry.html", items=items, grouped=grouped)
 
 
 @app.route("/pantry/<int:item_id>/delete", methods=["POST"])

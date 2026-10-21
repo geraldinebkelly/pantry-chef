@@ -15,16 +15,21 @@
   {% if not items %}
   <p>Your pantry is empty.</p>
   {% endif %}
-  <ul class="plain">
-  {% for item in items %}
-    <li class="recipe-row">
-      <span>{{ item['name'] }}</span>
-      <form class="inline" method="post" action="{{ url_for('delete_pantry_item', item_id=item['id']) }}">
-        <button type="submit" class="btn-danger">Remove</button>
-      </form>
-    </li>
+  {% for group in grouped %}
+  <div class="pantry-group">
+    <h3 class="category-heading">{{ group.emoji }} {{ group.name }}</h3>
+    <div class="pantry-chips">
+      {% for item in group.pantry_items %}
+      <span class="pantry-chip">
+        {{ item['name'] }}
+        <form class="inline" method="post" action="{{ url_for('delete_pantry_item', item_id=item['id']) }}">
+          <button type="submit" class="pantry-chip-remove" title="Remove" aria-label="Remove {{ item['name'] }}">×</button>
+        </form>
+      </span>
+      {% endfor %}
+    </div>
+  </div>
   {% endfor %}
-  </ul>
 </div>
 {% if items %}
 <a class="btn" href="{{ url_for('matches') }}">See what I can make →</a>
