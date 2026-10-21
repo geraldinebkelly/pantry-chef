@@ -11,7 +11,15 @@
 </div>
 
 <div class="card">
-  <h2>Current pantry ({{ items|length }})</h2>
+  <div class="ingredients-header">
+    <h2>Current pantry ({{ items|length }})</h2>
+    {% if items %}
+    <form method="post" action="{{ url_for('clear_pantry') }}"
+          onsubmit="return confirm('Remove all {{ items|length }} pantry items?');">
+      <button type="submit" class="btn-danger">Clear pantry</button>
+    </form>
+    {% endif %}
+  </div>
   {% if not items %}
   <p>Your pantry is empty.</p>
   {% endif %}

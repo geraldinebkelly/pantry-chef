@@ -440,6 +440,17 @@ def delete_pantry_item(item_id):
     return redirect(url_for("pantry"))
 
 
+@app.route("/pantry/clear", methods=["POST"])
+def clear_pantry():
+    conn = get_connection()
+    try:
+        conn.execute("DELETE FROM pantry_items")
+        conn.commit()
+    finally:
+        conn.close()
+    return redirect(url_for("pantry"))
+
+
 @app.route("/matches")
 def matches():
     conn = get_connection()

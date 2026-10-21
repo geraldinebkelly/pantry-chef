@@ -286,6 +286,8 @@ th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border);
   gap: 10px;
 }
 .ingredients-header h2 { margin: 0; }
+.ingredients-header form { margin: 0; }
+.ingredients-header button { margin: 0; }
 .scale-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .quick-scale { display: flex; align-items: center; gap: 6px; }
 .quick-scale-label { font-weight: 600; font-size: 0.9rem; margin-right: 2px; }
