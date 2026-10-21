@@ -70,16 +70,12 @@ def dashboard():
         recipe_count = conn.execute(
             "SELECT COUNT(*) c FROM recipes WHERE is_draft = 0"
         ).fetchone()["c"]
-        draft_count = conn.execute(
-            "SELECT COUNT(*) c FROM recipes WHERE is_draft = 1"
-        ).fetchone()["c"]
         pantry_count = conn.execute("SELECT COUNT(*) c FROM pantry_items").fetchone()["c"]
     finally:
         conn.close()
     return render_template(
         "dashboard.html",
         recipe_count=recipe_count,
-        draft_count=draft_count,
         pantry_count=pantry_count,
     )
 
